@@ -17,6 +17,9 @@ function iconsTreeShaking(): Plugin {
     };
 }
 
+/** Backend for the dev proxy; override to run a second dev stack: DOCKDUCK_API=http://127.0.0.1:18100 pnpm dev */
+const apiTarget = process.env.DOCKDUCK_API ?? "http://127.0.0.1:8080";
+
 export default defineConfig({
     plugins: [
         vue(),
@@ -30,8 +33,8 @@ export default defineConfig({
     server: {
         port: 5173,
         proxy: {
-            "/api": "http://127.0.0.1:8080",
-            "/ws": { target: "ws://127.0.0.1:8080", ws: true },
+            "/api": apiTarget,
+            "/ws": { target: apiTarget.replace("http", "ws"), ws: true },
         },
     },
     build: { outDir: "dist", emptyOutDir: true },

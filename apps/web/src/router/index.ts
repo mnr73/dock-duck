@@ -24,13 +24,13 @@ export const router = createRouter({
                 },
                 {
                     path: "compose",
-                    component: () => import("@/pages/ComingSoonPage.vue"),
-                    props: { title: "Compose editor", phase: "Phase 6" },
+                    name: "project-compose",
+                    component: () => import("@/pages/ProjectComposePage.vue"),
                 },
                 {
                     path: "env",
-                    component: () => import("@/pages/ComingSoonPage.vue"),
-                    props: { title: "Environment", phase: "Phase 6" },
+                    name: "project-env",
+                    component: () => import("@/pages/ProjectEnvPage.vue"),
                 },
                 {
                     path: "logs",

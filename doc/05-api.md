@@ -56,3 +56,13 @@ Context selection: header `X-Docker-Context: <name>` or query `?context=<name>` 
 | `/projects/{id}/logs?services=a,b&tail=500\|all&since=15m` | server→client JSON arrays `[{s,t,m}]` (batched), then `{"type":"end","error"?}` |
 | `/projects/{id}/exec?service=app&user=1000&cmd=...&cols=&rows=` | binary = PTY bytes both ways; text = `{"type":"resize","cols":,"rows":}` |
 | `/jobs/{id}` | server→client output lines, then `{type:"done",ok:bool}` |
+
+## Files (Phase 6)
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/projects/{id}/files` | `[{id,kind,name,path,exists}]`: `compose-0..N` in merge order, then `env` |
+| GET | `/projects/{id}/files/{fid}` | `{content,etag,mode,...}`; `env` is masked unless `?reveal=1` (`X-Content-Masked: 1`); `Cache-Control: no-store` |
+| PUT | `/projects/{id}/files/{fid}` | body `{content}`, header `If-Match: <etag>` (empty = create a missing `.env`). 409 `conflict`, 413, 422 `not_text`, 400 `masked_value` |
+| POST | `/projects/{id}/files/{fid}/validate` | body `{content}` -> `{ok,problems:[{severity,line?,message}]}`; Compose files only |
+| GET | `/projects/{id}/env` | structured view: `lines` (masked unless `?reveal=1`), `example` (missing keys), `usage` (`env_file` services, interpolated vars) |

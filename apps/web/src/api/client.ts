@@ -22,12 +22,15 @@ async function request<T>(
     method: string,
     path: string,
     body?: unknown,
+    headers: Record<string, string> = {},
 ): Promise<T> {
     const f = useApiFetch(path, {
         method,
         body: body === undefined ? undefined : JSON.stringify(body),
         headers:
-            body === undefined ? {} : { "Content-Type": "application/json" },
+            body === undefined
+                ? headers
+                : { "Content-Type": "application/json", ...headers },
     });
     await f.execute();
 
@@ -62,8 +65,8 @@ export const api = {
     get: <T>(path: string) => request<T>("GET", path),
     post: <T>(path: string, body?: unknown) =>
         request<T>("POST", path, body ?? {}),
-    put: <T>(path: string, body?: unknown) =>
-        request<T>("PUT", path, body ?? {}),
+    put: <T>(path: string, body?: unknown, headers?: Record<string, string>) =>
+        request<T>("PUT", path, body ?? {}, headers),
     del: <T = void>(path: string) => request<T>("DELETE", path),
 };
 

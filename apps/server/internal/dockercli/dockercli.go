@@ -68,6 +68,36 @@ func (c *Client) Output(ctx context.Context, args ...string) ([]byte, error) {
 	return c.run(ctx, args...)
 }
 
+// OutputStdin is Output with a string on stdin (used to validate an unsaved
+// Compose file via `compose -f -`). Unlike Output it also returns stderr when
+// the command succeeds: Compose reports warnings (an unset ${VAR}) there with
+// exit code 0.
+func (c *Client) OutputStdin(ctx context.Context, stdin string, args ...string) (stdout, stderr []byte, err error) {
+	if err := guard(args); err != nil {
+		return nil, nil, err
+	}
+	if _, ok := ctx.Deadline(); !ok && c.Timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, c.Timeout)
+		defer cancel()
+	}
+	bin := c.Bin
+	if bin == "" {
+		bin = "docker"
+	}
+	cmd := exec.CommandContext(ctx, bin, args...)
+	cmd.Stdin = strings.NewReader(stdin)
+	var so, se bytes.Buffer
+	cmd.Stdout, cmd.Stderr = &so, &se
+	if err := cmd.Run(); err != nil {
+		if ctx.Err() != nil {
+			err = ctx.Err()
+		}
+		return so.Bytes(), se.Bytes(), &ExitError{Args: args, Stderr: se.String(), Err: err}
+	}
+	return so.Bytes(), se.Bytes(), nil
+}
+
 // UseContext runs `docker context use <name>`: the single sanctioned context
 // mutation, only called when the user enabled "sync with Docker CLI".
 func (c *Client) UseContext(ctx context.Context, name string) error {

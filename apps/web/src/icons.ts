@@ -83,3 +83,13 @@ export { default as IconEnv } from "~icons/lucide/file-cog";
 export { default as IconLogs } from "~icons/lucide/scroll-text";
 export { default as IconTerminal } from "~icons/lucide/square-terminal";
 export { default as IconPorts } from "~icons/lucide/cable";
+
+/* ------------------------------- Editors ---------------------------------- */
+export { default as IconSave } from "~icons/lucide/save";
+export { default as IconUndo } from "~icons/lucide/undo-2";
+export { default as IconReveal } from "~icons/lucide/eye";
+export { default as IconHide } from "~icons/lucide/eye-off";
+export { default as IconSecret } from "~icons/lucide/lock";
+export { default as IconCheckFile } from "~icons/lucide/file-check";
+export { default as IconTable } from "~icons/lucide/table-2";
+export { default as IconRaw } from "~icons/lucide/file-text";

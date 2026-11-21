@@ -102,11 +102,14 @@ Follow-up (after Phase 5):
 - **Log viewer stuck on "connecting"** (reported in dev mode): an older backend binary that lacks `/ws/v1/.../logs` answered the WebSocket handshake with the SPA's `index.html` (200), which never upgrades, so the socket hung. Fixes: unknown `/ws/*` is now a real JSON 404 (tested), and the toolbar shows `disconnected` with an error alert and a Reconnect button once the socket gives up. In dev, a backend started before a code change keeps running the old code: restart `go run` after pulling backend changes.
 
 
-## Phase 6 — Editors: compose + env (2–3 d)
-- [ ] CodeMirror 6: YAML highlight, line numbers, search, indent, dirty indicator, save/discard (board 02)
-- [ ] Multi-file tabs; server-side validation via `compose config -q`; ETag conflict handling; `.bak`
-- [ ] Env editor: table + raw toggle, masked secrets with per-row reveal, add/remove, missing-file state (board 03)
-- [ ] "Apply changes" hint (recreate with `up -d`)
+## Phase 6 — Editors: compose + env (2–3 d) — done
+- [x] CodeMirror 6 (YAML, line numbers, search, history, indent), colours from the app tokens so light/dark follow the theme; dirty badge ("N lines changed"), Save (Ctrl+S) / Discard / Validate
+- [x] Multi-file: one tab per Compose file (`?file=N`); validation with `docker compose config -q` where the edited file goes through **stdin** (nothing is written before Save; other files, `.env` interpolation and relative paths still resolve). Errors show a line (squiggle + gutter + list), warnings (an unset `${VAR}`) do not block. Save runs validation first; "Save anyway" for the rare case
+- [x] Safe writes: file ids are server-derived (`compose-N`, `env`), never paths; ETag (content hash) via `If-Match`, 409 on a change on disk (UI offers "Reload from disk"); atomic temp+rename, mode preserved (a new `.env` is 0600), symlinks written through, one `.bak` next to the file (same mode), 2 MiB / UTF-8 text only
+- [x] Env editor: Table / Raw toggle, add/remove rows, key validation (empty, malformed, duplicate), quotes/comments/`export`/multi-line values preserved, missing-file state ("not created yet"), `.env.example` banner ("Add them"; secret-looking example values are not copied), which services load it via `env_file`, which `${VARS}` Compose uses that are not defined
+- [x] Secrets: values of secret-looking keys (PASSWORD, TOKEN, KEY, SECRET, DSN, ...) are masked **on the server**, so they are not in the browser until "Reveal secrets" (`?reveal=1`, logged). A masked secret serializes as the mask, and the server and the UI both refuse to save text that contains it, so a hidden value can never overwrite the real one
+- [x] "Apply" hint after a save while containers are running (`up -d` recreates only what changed), verified: old value stays until Apply, then the container shows the new one
+- Unsaved-changes guard on route change and tab close.
 
 ## Phase 7 — Exec terminal (1–2 d)
 - [ ] PTY over WS, xterm.js, resize, reconnect handling

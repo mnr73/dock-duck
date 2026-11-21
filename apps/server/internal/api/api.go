@@ -11,6 +11,7 @@ import (
 	"dockduck/internal/contexts"
 	"dockduck/internal/dockercli"
 	"dockduck/internal/events"
+	"dockduck/internal/files"
 	"dockduck/internal/jobs"
 	"dockduck/internal/ports"
 	"dockduck/internal/projects"
@@ -33,6 +34,7 @@ type Deps struct {
 	Events   *events.Hub
 	Ports    *ports.Service
 	Streamer dockercli.Streamer // long-running docker commands (logs)
+	Stdin    files.StdinRunner  // compose validation of unsaved content
 }
 
 // New returns the root handler: /api/v1/* is the API, everything else goes to UI.

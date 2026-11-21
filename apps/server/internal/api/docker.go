@@ -43,6 +43,13 @@ func registerDocker(mux *http.ServeMux, d Deps) {
 		mux.HandleFunc("GET /ws/v1/projects/{id}/logs", h.logStream)
 		mux.HandleFunc("GET /api/v1/projects/{id}/logs/download", h.logDownload)
 	}
+	if d.Stdin != nil {
+		mux.HandleFunc("GET /api/v1/projects/{id}/files", h.listFiles)
+		mux.HandleFunc("GET /api/v1/projects/{id}/files/{fid}", h.readFile)
+		mux.HandleFunc("PUT /api/v1/projects/{id}/files/{fid}", h.writeFile)
+		mux.HandleFunc("POST /api/v1/projects/{id}/files/{fid}/validate", h.validateFile)
+		mux.HandleFunc("GET /api/v1/projects/{id}/env", h.readEnv)
+	}
 	if d.Ports != nil {
 		mux.HandleFunc("GET /api/v1/ports", h.listPorts)
 	}

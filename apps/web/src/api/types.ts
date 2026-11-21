@@ -164,3 +164,54 @@ export interface ContainerDetail {
     networks: { name: string; ip: string; aliases?: string[] }[];
     ports: Port[];
 }
+
+export interface FileRef {
+    id: string;
+    kind: "compose" | "env";
+    name: string;
+    path: string;
+    exists: boolean;
+}
+
+export interface FileContent extends FileRef {
+    content: string;
+    etag: string;
+    mode: string;
+}
+
+export interface Problem {
+    severity: "error" | "warning";
+    line?: number;
+    message: string;
+}
+
+export interface Validation {
+    ok: boolean;
+    problems: Problem[];
+}
+
+export interface EnvLine {
+    kind: "var" | "comment" | "blank" | "invalid";
+    key?: string;
+    value?: string;
+    quote?: "" | '"' | "'";
+    export?: boolean;
+    raw?: string;
+    secret?: boolean;
+    masked?: boolean;
+    set?: boolean;
+}
+
+export interface EnvView {
+    file: FileRef;
+    etag: string;
+    mode: string;
+    lines: EnvLine[];
+    revealed: boolean;
+    example: {
+        name: string;
+        count: number;
+        missing: { key: string; value: string }[];
+    } | null;
+    usage: { services: string[]; interpolated: string[] };
+}
