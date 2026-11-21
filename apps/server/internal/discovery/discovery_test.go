@@ -52,3 +52,39 @@ func TestScanRootItselfIsProject(t *testing.T) {
 		t.Fatalf("%v %v", got, err)
 	}
 }
+
+func TestComposeFileFromDotEnvIsHonoured(t *testing.T) {
+	dir := t.TempDir()
+	for _, n := range []string{"compose.yml", "compose.dev.yml", "compose.override.yml"} {
+		if err := os.WriteFile(filepath.Join(dir, n), []byte("services: {}\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	env := "# local\nAPP=x\nCOMPOSE_FILE=compose.yml:compose.dev.yml # dev\n"
+	if err := os.WriteFile(filepath.Join(dir, ".env"), []byte(env), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	f, ok := InspectDir(dir)
+	if !ok || len(f.Files) != 2 || filepath.Base(f.Files[1]) != "compose.dev.yml" {
+		t.Fatalf("COMPOSE_FILE must decide the files (and the automatic override is then not added): %+v", f)
+	}
+
+	// custom separator and quotes
+	env = "COMPOSE_PATH_SEPARATOR=;\nCOMPOSE_FILE=\"compose.yml;compose.dev.yml\"\n"
+	_ = os.WriteFile(filepath.Join(dir, ".env"), []byte(env), 0o644)
+	if f, _ := InspectDir(dir); len(f.Files) != 2 {
+		t.Fatalf("separator/quotes: %+v", f.Files)
+	}
+
+	// a listed file that does not exist: fall back to the normal discovery
+	_ = os.WriteFile(filepath.Join(dir, ".env"), []byte("COMPOSE_FILE=compose.yml:nope.yml\n"), 0o644)
+	if f, ok := InspectDir(dir); !ok || len(f.Files) != 2 || filepath.Base(f.Files[1]) != "compose.override.yml" {
+		t.Fatalf("fallback: %+v", f.Files)
+	}
+
+	// no COMPOSE_FILE: unchanged
+	_ = os.WriteFile(filepath.Join(dir, ".env"), []byte("APP=1\n"), 0o644)
+	if f, _ := InspectDir(dir); len(f.Files) != 2 || filepath.Base(f.Files[0]) != "compose.yml" {
+		t.Fatalf("plain: %+v", f.Files)
+	}
+}

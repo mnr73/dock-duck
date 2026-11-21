@@ -2,6 +2,7 @@
 package discovery
 
 import (
+	"bufio"
 	"context"
 	"io/fs"
 	"os"
@@ -77,7 +78,63 @@ func Scan(ctx context.Context, root string, maxDepth int) ([]Found, error) {
 	return out, err
 }
 
+// envComposeFiles reads COMPOSE_FILE from <dir>/.env, the way Compose does: paths are
+// relative to the project directory and joined by COMPOSE_PATH_SEPARATOR (default ":").
+// Compose ignores COMPOSE_FILE as soon as a -f flag is given, and DockDuck always passes
+// -f, so the files named here have to be passed explicitly or they would never load
+// (a dev override such as compose.dev.yml silently dropped).
+func envComposeFiles(dir string) []string {
+	f, err := os.Open(filepath.Join(dir, ".env"))
+	if err != nil {
+		return nil
+	}
+	defer f.Close()
+	vars := map[string]string{}
+	sc := bufio.NewScanner(f)
+	for sc.Scan() {
+		line := strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(sc.Text()), "export "))
+		k, v, ok := strings.Cut(line, "=")
+		k = strings.TrimSpace(k)
+		if !ok || (k != "COMPOSE_FILE" && k != "COMPOSE_PATH_SEPARATOR") {
+			continue
+		}
+		v = strings.TrimSpace(v)
+		if len(v) >= 2 && (v[0] == '"' || v[0] == '\'') && v[len(v)-1] == v[0] {
+			v = v[1 : len(v)-1]
+		} else if i := strings.Index(v, " #"); i >= 0 {
+			v = strings.TrimSpace(v[:i])
+		}
+		vars[k] = v
+	}
+	list := vars["COMPOSE_FILE"]
+	if list == "" {
+		return nil
+	}
+	sep := vars["COMPOSE_PATH_SEPARATOR"]
+	if sep == "" {
+		sep = string(os.PathListSeparator)
+	}
+	var out []string
+	for _, name := range strings.Split(list, sep) {
+		name = strings.TrimSpace(name)
+		if name == "" {
+			continue
+		}
+		if !filepath.IsAbs(name) {
+			name = filepath.Join(dir, name)
+		}
+		if !isFile(name) {
+			return nil // a listed file is missing: fall back to the usual file names
+		}
+		out = append(out, name)
+	}
+	return out
+}
+
 func inspectDir(dir string) (Found, bool) {
+	if files := envComposeFiles(dir); len(files) > 0 {
+		return Found{Dir: dir, Files: files, EnvFile: filepath.Join(dir, ".env")}, true
+	}
 	for _, base := range baseNames {
 		if !isFile(filepath.Join(dir, base)) {
 			continue
