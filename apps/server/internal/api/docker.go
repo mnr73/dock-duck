@@ -18,7 +18,7 @@ func registerDocker(mux *http.ServeMux, d Deps) {
 	if d.Contexts == nil || d.Projects == nil || d.Store == nil {
 		return
 	}
-	h := &dockerHandlers{d}
+	h := &dockerHandlers{Deps: d, upd: &updateState{}}
 
 	mux.HandleFunc("GET /api/v1/contexts", h.listContexts)
 	mux.HandleFunc("PUT /api/v1/contexts/selected", h.selectContext)
@@ -61,6 +61,10 @@ func registerDocker(mux *http.ServeMux, d Deps) {
 		mux.HandleFunc("DELETE /api/v1/terminals/{id}", h.closeTerminal)
 		mux.HandleFunc("GET /ws/v1/terminals/{id}", h.terminalStream)
 	}
+	if d.Updater != nil {
+		mux.HandleFunc("GET /api/v1/update", h.updateStatus)
+		mux.HandleFunc("POST /api/v1/update/install", h.installUpdate)
+	}
 	if d.Registries != nil {
 		mux.HandleFunc("GET /api/v1/registries", h.registryState)
 		mux.HandleFunc("POST /api/v1/registries/login", h.registryLogin)
@@ -74,7 +78,10 @@ func registerDocker(mux *http.ServeMux, d Deps) {
 	}
 }
 
-type dockerHandlers struct{ Deps }
+type dockerHandlers struct {
+	Deps
+	upd *updateState
+}
 
 func (h *dockerHandlers) listContexts(w http.ResponseWriter, r *http.Request) {
 	list, err := h.Contexts.List(r.Context())

@@ -89,3 +89,9 @@ Everything under `/api/` and `/ws/` except `/api/v1/health` and `/api/v1/auth/*`
 | GET | `/terminals/system` | `{available, name?, reason?}` native terminal |
 | POST | `/projects/{id}/terminals/system` | same body; opens the system terminal (loopback only) |
 | WS | `/ws/v1/terminals/{id}` | server: TEXT `{"type":"attached","replay":N}`, then one BINARY replay frame, then BINARY output; TEXT `{"type":"exit","code"}` / `taken` / `slow` / `gone`. client: BINARY keyboard bytes, TEXT `{"type":"resize","cols","rows"}` |
+
+## Update
+| | |
+|---|---|
+| `GET /update[?refresh=1]` | `{current, latest, available, url, notes, date, can_install, reason?, managed}`; cached 2 min; once an update is installed: `{installed, current}`; 502 `update_check_failed` if GitHub cannot be reached |
+| `POST /update/install` | downloads, verifies the checksum and replaces the binary, answers `{installed, restart: "self"|"service"}`, then the process restarts; 422 `update_failed` (dev build, not writable, checksum mismatch, already latest), 409 if one was already installed |

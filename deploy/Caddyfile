@@ -1,0 +1,5 @@
+# DockDuck behind Caddy: automatic HTTPS, WebSockets work out of the box.
+# Replace the name; DockDuck itself listens on 127.0.0.1:9473.
+duck.example.com {
+    reverse_proxy 127.0.0.1:9473
+}

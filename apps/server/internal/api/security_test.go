@@ -8,7 +8,32 @@ import (
 )
 
 func guarded() http.Handler {
-	return guardBrowser(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(204) }))
+	return guardBrowser(nil, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(204) }))
+}
+
+// With a password, any Host name is fine (reverse proxy on a domain); the Origin
+// rule still applies. Without one, only localhost and IP literals.
+func TestHostRuleDependsOnThePassword(t *testing.T) {
+	set := false
+	h := guardBrowser(func() bool { return set }, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(204) }))
+	const domain = "duck.example.com"
+	if got := do(h, "GET", domain, nil); got != 403 {
+		t.Errorf("open server, foreign Host (DNS rebinding): %d", got)
+	}
+	set = true
+	if got := do(h, "GET", domain, nil); got != 204 {
+		t.Errorf("password set, domain behind a proxy: %d", got)
+	}
+	if got := do(h, "POST", domain, map[string]string{"Origin": "https://" + domain}); got != 204 {
+		t.Errorf("own origin through the proxy: %d", got)
+	}
+	if got := do(h, "POST", domain, map[string]string{"Origin": "https://evil.example"}); got != 403 {
+		t.Errorf("a foreign page must still be refused: %d", got)
+	}
+	set = false
+	if got := do(h, "GET", domain, nil); got != 403 {
+		t.Errorf("password removed: the strict rule is back immediately: %d", got)
+	}
 }
 
 func do(h http.Handler, method, host string, hdr map[string]string) int {

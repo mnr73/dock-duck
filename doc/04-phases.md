@@ -138,10 +138,14 @@ Follow-up (after Phase 5):
 - [x] Error and disconnected states: the server going away raises the banner within a second (no Docker-context button then), and a reconnect clears it and reloads contexts/projects, since events were missed meanwhile
 - Not done on purpose: "Watch roots for changes" and "Keep running in the menu bar" from the mockup (a server has no menu bar; a filesystem watcher is a separate feature); i18n is string-ready only (all UI text is English literals in templates, no catalogue yet)
 
-## Phase 10 — Packaging & release (1 d)
-- [ ] Cross-compiled binaries (linux amd64/arm64, darwin), `--version`
-- [ ] systemd unit, install script, reverse-proxy example (TLS), README usage
-- [ ] Integration tests against a throwaway compose project
+## Phase 10 — Packaging & release (1 d) — done
+- [x] Default port **9473** (loopback), MIT licence
+- [x] `scripts/build-release.sh vX.Y.Z`: static (CGO off) Linux/macOS x amd64/arm64 archives that hold `dockduck` at their root, plus `checksums.txt`; the `release` workflow runs it on a `vX.Y.Z` tag and publishes the GitHub release (tags with `-` are prereleases, which the updater ignores)
+- [x] `install.sh` (also served at `https://mnr73.github.io/dock-duck/install.sh`): detects OS/CPU, takes the latest or `--version`, **verifies SHA-256**, refuses on mismatch, installs atomically (rename over the old file); re-running updates; `--service` writes and starts a systemd unit (`Restart=always`). Tested against a fake GitHub: fresh install, no-op re-run, tampered download refused (old binary untouched), update v0.0.1 to v0.0.2
+- [x] In-app update: `dockduck update [--check]`, `GET /api/v1/update`, `POST /api/v1/update/install`, Settings > Updates. Only runs when asked; checksum-verified; atomic swap; the process then re-execs itself, or exits for systemd to restart (`INVOCATION_ID`). Verified in a browser: a running v0.0.1 updated itself to v0.0.2 and came back in about 2 s. `DOCKDUCK_UPDATE_API` (environment only) points it at a mirror or a test server
+- [x] Reverse proxy: nginx and Caddy examples in `deploy/`, tested with nginx in Docker on a non-localhost host name (login, `Secure` cookie, CSRF/Origin, WebSockets, foreign-origin WebSocket refused). To make that possible the Host-name rule now only applies while no password is set (once there is one, any Host is fine; Origin checks always apply)
+- [x] Documentation site (VitePress, `docs/`) published by the `docs` workflow to GitHub Pages: install and update, first run, using it, server setup (systemd, reverse proxy, security), reference (CLI, config, API, troubleshooting)
+- Not done: TLS inside the binary (reverse proxy instead), Windows, `.deb`/`.rpm`/Homebrew/Docker image, an automatic "new version available" check (the user chose manual)
 
 ## Later / ideas
 Multi-host agent mode, image/volume/network pages, compose templates, project groups/tags, notifications on unhealthy, Podman support.

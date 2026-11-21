@@ -18,6 +18,7 @@ import (
 	"dockduck/internal/projects"
 	"dockduck/internal/registries"
 	"dockduck/internal/terminal"
+	"dockduck/internal/updater"
 )
 
 // Info is static build/runtime metadata exposed by /api/v1/health.
@@ -43,6 +44,8 @@ type Deps struct {
 	DockerBin  string              // docker binary for exec sessions (default "docker")
 	Auth       *auth.Service       // nil = no login at all (tests, embedding)
 	Registries *registries.Service // docker login/logout and the signed-in list
+	Updater    *updater.Updater    // GitHub release check and in-place update; nil = off
+	Restart    func()              // asks the process to restart after an update
 	// SystemTerminal overrides native-terminal detection (tests).
 	SystemTerminal func() *terminal.SystemTerminal
 }
@@ -71,7 +74,11 @@ func New(d Deps) http.Handler {
 	if d.Auth != nil {
 		h = requireAuth(d.Auth, h)
 	}
-	return logRequests(guardBrowser(h))
+	var passwordSet func() bool
+	if d.Auth != nil {
+		passwordSet = d.Auth.Configured
+	}
+	return logRequests(guardBrowser(passwordSet, h))
 }
 
 // WriteJSON writes v as JSON.

@@ -24,17 +24,29 @@ import (
 	"dockduck/internal/projects"
 	"dockduck/internal/registries"
 	"dockduck/internal/terminal"
+	"dockduck/internal/updater"
 	"dockduck/internal/webui"
 )
+
+// defaultAddr is loopback on a port no common dev tool uses (not 3000, 5173, 8000, 8080...).
+const defaultAddr = "127.0.0.1:9473"
 
 // version is set at build time: -ldflags "-X main.version=1.2.3".
 var version = "dev"
 
 func main() {
-	if len(os.Args) > 1 && os.Args[1] == "passwd" {
-		os.Exit(runPasswd(os.Args[2:], os.Stdin, os.Stdout, os.Stderr))
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "passwd":
+			os.Exit(runPasswd(os.Args[2:], os.Stdin, os.Stdout, os.Stderr))
+		case "update":
+			os.Exit(runUpdate(os.Args[2:], os.Stdout, os.Stderr))
+		case "version":
+			fmt.Println(version)
+			return
+		}
 	}
-	addr := flag.String("addr", "127.0.0.1:8080", "listen address")
+	addr := flag.String("addr", defaultAddr, "listen address")
 	dev := flag.Bool("dev", false, "development mode (debug logs; UI is served by the Vite dev server)")
 	cfgPath := flag.String("config", "", "config file (default: <user config dir>/dockduck/config.json)")
 	showVersion := flag.Bool("version", false, "print version and exit")
@@ -82,6 +94,7 @@ func run(addr, cfgPath string) error {
 	home, _ := os.UserHomeDir()
 
 	terminals := terminal.NewManager(terminal.SpawnPTY)
+	restart := make(chan struct{}, 1)
 	srv := &http.Server{
 		Addr: addr,
 		Handler: api.New(api.Deps{
@@ -99,6 +112,13 @@ func run(addr, cfgPath string) error {
 			Terminals:  terminals,
 			Auth:       authSvc,
 			Registries: &registries.Service{Docker: docker},
+			Updater:    &updater.Updater{Version: version},
+			Restart: func() {
+				select {
+				case restart <- struct{}{}:
+				default:
+				}
+			},
 		}),
 		ReadHeaderTimeout: 10 * time.Second,
 	}
@@ -123,6 +143,12 @@ func run(addr, cfgPath string) error {
 	select {
 	case err := <-errc:
 		return err
+	case <-restart:
+		terminals.Shutdown()
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		_ = srv.Shutdown(shutdownCtx)
+		return reexec()
 	case <-ctx.Done():
 		terminals.Shutdown() // kill shells and what they left running in containers
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -131,7 +157,27 @@ func run(addr, cfgPath string) error {
 	}
 }
 
-// isLoopbackHost: localhost or a loopback IP literal. An empty host (":8080") and
+// reexec starts the freshly installed binary in place of this process. Under a
+// service manager (systemd sets INVOCATION_ID) it just exits: the manager's
+// Restart= brings the new binary up, and exec-ing behind its back would confuse it.
+func reexec() error {
+	if updater.Managed() {
+		slog.Info("update installed; exiting so the service manager starts the new version")
+		os.Exit(0)
+	}
+	exe, err := os.Executable()
+	if err != nil {
+		return fmt.Errorf("update installed, restart manually: %w", err)
+	}
+	slog.Info("update installed; restarting", "exe", exe)
+	// the old file was replaced by rename; the path now points at the new binary
+	if err := syscall.Exec(exe, os.Args, os.Environ()); err != nil {
+		return fmt.Errorf("update installed but restart failed, start dockduck again: %w", err)
+	}
+	return nil
+}
+
+// isLoopbackHost: localhost or a loopback IP literal. An empty host (":9473") and
 // 0.0.0.0 listen on every interface, so they are NOT loopback.
 func isLoopbackHost(host string) bool {
 	if host == "localhost" {

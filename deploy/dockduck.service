@@ -1,0 +1,19 @@
+[Unit]
+Description=DockDuck - web GUI for Docker Compose projects
+Documentation=https://mnr73.github.io/dock-duck/
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+# The user must be able to use Docker (member of the "docker" group). Do not run as root unless you must.
+User=%i
+ExecStart=/usr/local/bin/dockduck --addr 127.0.0.1:9473
+# always, not on-failure: an update from Settings makes DockDuck exit cleanly and this brings the new version up
+Restart=always
+RestartSec=2
+# DockDuck stops its terminals' leftovers on SIGTERM; give it a moment
+TimeoutStopSec=15
+
+[Install]
+WantedBy=multi-user.target

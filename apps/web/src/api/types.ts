@@ -298,3 +298,18 @@ export interface ServerSettings {
 export type ServerSettingsPatch = Partial<
     Pick<ServerSettings, "default_context" | "scan_depth" | "sync_cli">
 >;
+
+export interface UpdateStatus {
+    current: string;
+    latest?: string;
+    available: boolean;
+    url?: string;
+    notes?: string;
+    date?: string;
+    can_install: boolean;
+    reason?: string;
+    /** a service manager restarts DockDuck after an update */
+    managed: boolean;
+    /** set instead of the rest once an update is on disk and a restart is pending */
+    installed?: string;
+}

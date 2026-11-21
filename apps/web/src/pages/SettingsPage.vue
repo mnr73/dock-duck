@@ -15,6 +15,7 @@ import PageHeader from "@/features/layout/PageHeader.vue";
 import ScanDepthField from "@/features/settings/ScanDepthField.vue";
 import SettingsRow from "@/features/settings/SettingsRow.vue";
 import SettingsSection from "@/features/settings/SettingsSection.vue";
+import UpdateSection from "@/features/settings/UpdateSection.vue";
 
 import { useServerSettings } from "@/composables/useServerSettings";
 import { type ThemeChoice, useTheme } from "@/composables/useTheme";
@@ -286,6 +287,8 @@ async function saveDepth(depth: number) {
       </SettingsSection>
 
       <AccountSection />
+
+      <UpdateSection />
     </div>
   </div>
 </template>
