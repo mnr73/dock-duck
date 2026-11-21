@@ -21,7 +21,8 @@ const props = defineProps<{
   highlight?: string;
 }>();
 const emit = defineEmits<{
-  action: [service: string, action: "start" | "stop" | "restart"];
+  action: [service: string, action: "start" | "stop" | "restart" | "pull"];
+  build: [service: string];
   inspect: [service: string];
   logs: [service: string];
   exec: [service: string];
@@ -132,6 +133,7 @@ const rows = computed(() =>
             :service="r.s"
             :busy="busy.includes(r.s.name)"
             @action="(a) => emit('action', r.s.name, a)"
+            @build="emit('build', r.s.name)"
             @inspect="emit('inspect', r.s.name)"
             @logs="emit('logs', r.s.name)"
             @exec="emit('exec', r.s.name)"

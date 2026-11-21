@@ -14,6 +14,10 @@ export interface ActionRequest {
     volumes?: boolean;
     removeOrphans?: boolean;
     build?: boolean;
+    /** build: ignore the layer cache */
+    noCache?: boolean;
+    /** build: re-pull base images first */
+    pull?: boolean;
 }
 
 const PAST: Record<string, string> = {
@@ -23,7 +27,7 @@ const PAST: Record<string, string> = {
     stop: "stopped",
     restart: "restarted",
     build: "built",
-    pull: "pulled",
+    pull: "images pulled",
 };
 
 /** Runs project actions as server jobs, follows their output over WebSocket and toasts the result. */
@@ -55,6 +59,8 @@ export const useJobsStore = defineStore("jobs", () => {
                     volumes: req.volumes,
                     remove_orphans: req.removeOrphans,
                     build: req.build,
+                    no_cache: req.noCache,
+                    pull: req.pull,
                 },
             );
             current.value = res.job;

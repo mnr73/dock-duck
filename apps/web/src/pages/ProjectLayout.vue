@@ -4,9 +4,11 @@ import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 
 import {
+  IconBuild,
   IconDown,
   IconPlay,
   IconProjects,
+  IconPull,
   IconRestart,
   IconStop,
 } from "@/icons";
@@ -15,6 +17,7 @@ import Alert from "@/components/ui/Alert.vue";
 import Btn from "@/components/ui/Btn.vue";
 import EmptyState from "@/components/ui/EmptyState.vue";
 
+import BuildDialog from "@/features/projects/BuildDialog.vue";
 import DownDialog from "@/features/projects/DownDialog.vue";
 import InspectDrawer from "@/features/projects/InspectDrawer.vue";
 import JobDrawer from "@/features/projects/JobDrawer.vue";
@@ -32,6 +35,15 @@ const project = computed(() => projects.byId(id.value));
 const detail = computed(() => projects.details[id.value]);
 const running = computed(() => jobs.running[id.value] ?? "");
 const downOpen = ref(false);
+const buildOpen = ref(false);
+
+// Services unknown yet (detail still loading): keep the buttons usable.
+const hasBuildable = computed(
+  () => !detail.value || detail.value.services.some((s) => s.buildable),
+);
+const hasRegistryImages = computed(
+  () => !detail.value || detail.value.services.some((s) => !s.buildable),
+);
 const inspectService = ref<string | null>(null);
 
 watch(
@@ -58,6 +70,8 @@ function act(
     services?: string[];
     volumes?: boolean;
     removeOrphans?: boolean;
+    noCache?: boolean;
+    pull?: boolean;
   } = {},
 ) {
   if (!project.value) return;
@@ -67,6 +81,10 @@ function act(
     action,
     ...extra,
   });
+}
+
+function confirmBuild(o: { noCache: boolean; pull: boolean }) {
+  act("build", o);
 }
 
 function confirmDown(o: { volumes: boolean; removeOrphans: boolean }) {
@@ -114,6 +132,33 @@ function confirmDown(o: { volumes: boolean; removeOrphans: boolean }) {
         >
           <template #icon><IconRestart class="size-3.5" /></template>
           Restart
+        </Btn>
+        <span class="mx-0.5 my-1 w-px bg-line-strong" />
+        <Btn
+          :disabled="!hasRegistryImages || (!!running && running !== 'pull')"
+          :loading="running === 'pull'"
+          :title="
+            hasRegistryImages
+              ? 'Pull the newest images of every service that uses a registry image'
+              : 'No service uses a registry image (all are built locally)'
+          "
+          @click="act('pull')"
+        >
+          <template #icon><IconPull class="size-3.5" /></template>
+          Pull
+        </Btn>
+        <Btn
+          :disabled="!hasBuildable || (!!running && running !== 'build')"
+          :loading="running === 'build'"
+          :title="
+            hasBuildable
+              ? 'Build the images of every service that has a build section'
+              : 'No service has a build section'
+          "
+          @click="buildOpen = true"
+        >
+          <template #icon><IconBuild class="size-3.5" /></template>
+          Build…
         </Btn>
         <span class="mx-0.5 my-1 w-px bg-line-strong" />
         <Btn
@@ -171,6 +216,12 @@ function confirmDown(o: { volumes: boolean; removeOrphans: boolean }) {
       @close="inspectService = null"
     />
     <JobDrawer />
+    <BuildDialog
+      v-model:open="buildOpen"
+      :project-name="project.name"
+      :services="[]"
+      @confirm="confirmBuild"
+    />
     <DownDialog
       v-model:open="downOpen"
       :project-id="id"

@@ -205,3 +205,46 @@ func TestInspectContainers(t *testing.T) {
 		t.Error("non-hex id must be rejected")
 	}
 }
+
+func TestPullBuildArgs(t *testing.T) {
+	p := Project{Dir: "/p", Files: []string{"/p/c.yml"}}
+	join := func(action string, o ActionOpts) string {
+		a, err := ActionArgs("", p, action, o)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return strings.Join(a, " ")
+	}
+	for _, c := range []struct {
+		action string
+		o      ActionOpts
+		suffix string
+	}{
+		{"pull", ActionOpts{}, "pull --ignore-buildable"},
+		{"pull", ActionOpts{Services: []string{"redis"}}, "pull redis"},
+		{"build", ActionOpts{}, "build"},
+		{"build", ActionOpts{NoCache: true, Pull: true}, "build --no-cache --pull"},
+		{"build", ActionOpts{Services: []string{"app", "queue"}, NoCache: true}, "build --no-cache app queue"},
+	} {
+		if got := join(c.action, c.o); !strings.HasSuffix(got, "plain "+c.suffix) {
+			t.Errorf("%s %+v:\n got  %s\n want suffix %q", c.action, c.o, got, c.suffix)
+		}
+	}
+	if _, err := ActionArgs("", p, "build", ActionOpts{Services: []string{"--push"}}); err == nil {
+		t.Error("flag-looking service names must be rejected")
+	}
+}
+
+func TestBuildableFlag(t *testing.T) {
+	cfg := composeConfig{}
+	if err := json.Unmarshal([]byte(`{"name":"x","services":{"app":{"image":"a","build":{"context":"."}},"db":{"image":"mysql:8"},"web":{"build":"./web"}}}`), &cfg); err != nil {
+		t.Fatal(err)
+	}
+	got := map[string]bool{}
+	for _, sv := range BuildServices(cfg, nil) {
+		got[sv.Name] = sv.Buildable
+	}
+	if !got["app"] || got["db"] || !got["web"] {
+		t.Errorf("buildable: %v", got)
+	}
+}

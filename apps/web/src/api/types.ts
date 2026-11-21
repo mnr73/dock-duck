@@ -74,6 +74,8 @@ export interface ServiceInfo {
     health?: string;
     containers: ContainerInfo[];
     ports: Port[];
+    /** has a `build:` section (can be built; its image is not pulled from a registry) */
+    buildable: boolean;
 }
 
 export interface ProjectDetail {

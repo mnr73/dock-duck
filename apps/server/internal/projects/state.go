@@ -42,6 +42,10 @@ type ComposeService struct {
 	Health     string      `json:"health,omitempty"`
 	Containers []Container `json:"containers"`
 	Ports      []Port      `json:"ports"`
+	// Buildable: the service has a `build:` section (`compose build` applies, and
+	// `compose pull` would fail for its locally built image). Unknown (false) when
+	// `compose config` could not be resolved.
+	Buildable bool `json:"buildable"`
 }
 
 // Detail is a project with its services.
@@ -72,6 +76,7 @@ type composeConfig struct {
 	Name     string
 	Services map[string]struct {
 		Image string
+		Build any // present (object or string) when the service is built from source
 		Ports []struct {
 			Target    int
 			Published any // string or number
@@ -149,7 +154,7 @@ func summarize(running, total int) string {
 func BuildServices(cfg composeConfig, rows []psRow) []ComposeService {
 	by := map[string]*ComposeService{}
 	for name, c := range cfg.Services {
-		sv := &ComposeService{Name: name, Image: c.Image, Containers: []Container{}, Ports: []Port{}}
+		sv := &ComposeService{Name: name, Image: c.Image, Buildable: c.Build != nil, Containers: []Container{}, Ports: []Port{}}
 		for _, p := range c.Ports {
 			sv.Ports = append(sv.Ports, Port{HostIP: p.HostIP, HostPort: toInt(p.Published), ContainerPort: p.Target, Proto: p.Protocol})
 		}
@@ -255,6 +260,8 @@ type ActionOpts struct {
 	Volumes       bool     `json:"volumes"`        // down -v (destroys named volumes!)
 	RemoveOrphans bool     `json:"remove_orphans"` // up/down
 	Build         bool     `json:"build"`          // up --build
+	NoCache       bool     `json:"no_cache"`       // build --no-cache
+	Pull          bool     `json:"pull"`           // build --pull (refresh base images)
 }
 
 // ErrBadAction is returned for unknown actions or invalid options.
@@ -288,10 +295,22 @@ func ActionArgs(ctxName string, p Project, action string, o ActionOpts) ([]strin
 		if o.RemoveOrphans {
 			extra = append(extra, "--remove-orphans")
 		}
-	case "start", "stop", "restart", "pull":
+	case "start", "stop", "restart":
 		extra = []string{action}
+	case "pull":
+		extra = []string{"pull"}
+		if len(o.Services) == 0 {
+			// whole project: images built locally have no registry to pull from
+			extra = append(extra, "--ignore-buildable")
+		}
 	case "build":
 		extra = []string{"build"}
+		if o.NoCache {
+			extra = append(extra, "--no-cache")
+		}
+		if o.Pull {
+			extra = append(extra, "--pull")
+		}
 	default:
 		return nil, fmt.Errorf("%w: %q", ErrBadAction, action)
 	}

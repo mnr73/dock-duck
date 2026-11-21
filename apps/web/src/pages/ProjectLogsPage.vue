@@ -167,6 +167,7 @@ const emptyText = computed(() => {
   if (noContainers.value)
     return "No containers yet. Start the project to see its logs here.";
   if (stream.ended.value) return "No log output.";
+  if (stream.disconnected.value) return "Not connected.";
   return stream.live.value ? "Waiting for output…" : "Connecting…";
 });
 </script>
@@ -187,6 +188,7 @@ const emptyText = computed(() => {
       :services="detail?.services ?? []"
       :live="stream.live.value"
       :ended="stream.ended.value"
+      :disconnected="stream.disconnected.value"
       :idle="noContainers"
       :visible-count="shown.length"
       :total-count="stream.lines.value.length"
@@ -199,6 +201,17 @@ const emptyText = computed(() => {
       @restart="stream.restart"
     />
 
+    <Alert
+      v-if="stream.disconnected.value && !noContainers"
+      tone="err"
+      class="m-3"
+    >
+      Can’t open the log stream. The DockDuck server may be restarting or an
+      older build of it is running.
+      <template #action>
+        <Btn size="sm" @click="stream.restart">Reconnect</Btn>
+      </template>
+    </Alert>
     <Alert
       v-if="stream.ended.value && stream.endError.value"
       tone="warn"

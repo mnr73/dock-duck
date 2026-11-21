@@ -43,9 +43,14 @@ func New(d Deps) http.Handler {
 	mux.HandleFunc("GET /api/v1/health", func(w http.ResponseWriter, r *http.Request) {
 		WriteJSON(w, http.StatusOK, map[string]any{"ok": true, "version": info.Version, "home": info.Home})
 	})
-	mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
+	// Unknown API/WebSocket paths must be a real 404, never the SPA's index.html:
+	// a WebSocket handshake answered with HTML just hangs in "connecting" (this is
+	// what an outdated dev backend looked like to the log viewer).
+	notFound := func(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, http.StatusNotFound, "not_found", "unknown API endpoint")
-	})
+	}
+	mux.HandleFunc("/api/", notFound)
+	mux.HandleFunc("/ws/", notFound)
 	mux.Handle("/", ui)
 	return logRequests(mux)
 }

@@ -25,6 +25,7 @@ func TestHealthAndFallback(t *testing.T) {
 	}{
 		{"/api/v1/health", `"ok":true`, 200},
 		{"/api/v1/nope", `not_found`, 404},
+		{"/ws/v1/nope", `not_found`, 404}, // a WebSocket handshake must never get the SPA
 		{"/projects/x", "ui", 200},
 	}
 	for _, c := range cases {

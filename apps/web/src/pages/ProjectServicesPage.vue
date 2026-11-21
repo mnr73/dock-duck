@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 
 import { useRoute, useRouter } from "vue-router";
 
@@ -8,6 +8,7 @@ import { IconService } from "@/icons";
 import EmptyState from "@/components/ui/EmptyState.vue";
 import Spinner from "@/components/ui/Spinner.vue";
 
+import BuildDialog from "@/features/projects/BuildDialog.vue";
 import ServicesTable from "@/features/projects/ServicesTable.vue";
 
 import type { ProjectDetail, ProjectSummary } from "@/api/types";
@@ -40,12 +41,35 @@ const highlight = computed(
   () => (route.query.service as string | undefined) ?? "",
 );
 
-function act(service: string, action: "start" | "stop" | "restart") {
+function act(service: string, action: "start" | "stop" | "restart" | "pull") {
   jobs.run({
     projectId: props.project.id,
     projectName: props.project.name,
     action,
     services: [service],
+  });
+}
+
+// one service at a time: the dialog collects the build options first
+const buildService = ref<string | null>(null);
+const buildOpen = computed({
+  get: () => buildService.value !== null,
+  set: (v) => {
+    if (!v) buildService.value = null;
+  },
+});
+function askBuild(service: string) {
+  buildService.value = service;
+}
+function confirmBuild(o: { noCache: boolean; pull: boolean }) {
+  const service = buildService.value;
+  if (!service) return;
+  jobs.run({
+    projectId: props.project.id,
+    projectName: props.project.name,
+    action: "build",
+    services: [service],
+    ...o,
   });
 }
 
@@ -81,8 +105,15 @@ function toExec(service: string) {
     :busy="busy"
     :highlight="highlight"
     @action="act"
+    @build="askBuild"
     @inspect="emit('inspect', $event)"
     @logs="toLogs"
     @exec="toExec"
+  />
+  <BuildDialog
+    v-model:open="buildOpen"
+    :project-name="project.name"
+    :services="buildService ? [buildService] : []"
+    @confirm="confirmBuild"
   />
 </template>

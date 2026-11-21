@@ -32,6 +32,8 @@ const props = defineProps<{
   ended: boolean;
   /** the project has no containers: nothing to stream */
   idle?: boolean;
+  /** the connection could not be (re)established */
+  disconnected?: boolean;
   visibleCount: number;
   totalCount: number;
   searchError: string;
@@ -96,20 +98,30 @@ defineExpose({
       "
     >
       <StatusDot
-        :tone="idle || ended ? 'off' : live && !paused ? 'ok' : 'warn'"
+        :tone="
+          disconnected && !idle
+            ? 'err'
+            : idle || ended
+              ? 'off'
+              : live && !paused
+                ? 'ok'
+                : 'warn'
+        "
         size="xs"
         :pulse="live && !paused && !ended"
       />
       {{
         idle
           ? "not running"
-          : ended
-            ? "ended"
-            : paused
-              ? "paused"
-              : live
-                ? "live"
-                : "connecting"
+          : disconnected
+            ? "disconnected"
+            : ended
+              ? "ended"
+              : paused
+                ? "paused"
+                : live
+                  ? "live"
+                  : "connecting"
       }}
     </span>
 

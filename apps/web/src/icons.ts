@@ -23,6 +23,10 @@ export { default as IconDisconnected } from "~icons/lucide/unplug";
 export { default as IconPlay } from "~icons/lucide/play";
 export { default as IconStop } from "~icons/lucide/square";
 export { default as IconRestart } from "~icons/lucide/rotate-cw";
+/** compose build: build images from source */
+export { default as IconBuild } from "~icons/lucide/hammer";
+/** compose pull: fetch images from a registry */
+export { default as IconPull } from "~icons/lucide/cloud-download";
 /** compose down: stop and remove */
 export { default as IconDown } from "~icons/lucide/circle-arrow-down";
 export { default as IconRefresh } from "~icons/lucide/refresh-cw";

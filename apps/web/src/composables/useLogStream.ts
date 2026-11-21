@@ -144,6 +144,10 @@ export function useLogStream(o: LogStreamOptions) {
         failed,
         status: ws.status,
         live: computed(() => ws.status.value === "OPEN" && !ended.value),
+        /** the socket gave up (handshake refused, server gone) and docker did not end the stream */
+        disconnected: computed(
+            () => ws.status.value === "CLOSED" && !ended.value,
+        ),
         pause,
         resume,
         clear,

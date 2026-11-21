@@ -22,11 +22,11 @@ Context selection: header `X-Docker-Context: <name>` or query `?context=<name>` 
 | `GET /roots`, `POST /roots {path}`, `DELETE /roots/{id}` | |
 | `POST /roots/rescan` | returns discovered count |
 | `GET /projects` | `[{id,name,dir,files[],env_file?,root?,status,running,total}]` (status: running/partial/stopped/unknown; `root` empty = known only to Docker). `POST /roots` → 201 `{root,projects}`, 409 duplicate, 400 non-absolute/nonexistent path. |
-| `GET /projects/{id}` | `{project, services[{name,image,status,health?,ports[],containers[{id,name,state,status,health?,exit_code,image,ports[]}]}], config_error, active_job?}` |
+| `GET /projects/{id}` | `{project, services[{name,image,status,health?,buildable,ports[],containers[{id,name,state,status,health?,exit_code,image,ports[]}]}], config_error, active_job?}` |
 | `GET /projects/{id}/down-preview` | `{project, containers[], networks[], volumes[]}` removed by `down` / `down -v` |
 | `GET /projects/{id}/services/{svc}` | trimmed inspect of the service's containers (no env vars) |
 | `GET /projects/{id}/stats` | `{<container id>: {cpu_percent, mem_usage, mem_percent}}`, running containers, cached 3 s |
-| `POST /projects/{id}/actions/{up|down|start|stop|restart|build|pull}` | body `{services?[], volumes?, remove_orphans?, build?}` → 202 `{job_id, job}`; 409 `busy` if the project has a running job; 400 on unknown action/bad names; `down` takes no services |
+| `POST /projects/{id}/actions/{up|down|start|stop|restart|build|pull}` | body `{services?[], volumes?, remove_orphans?, build?, no_cache?, pull?}` → 202 `{job_id, job}`; 409 `busy` if the project has a running job; 400 on unknown action/bad names; `down` takes no services; project-wide `pull` adds `--ignore-buildable`; `build` honours `no_cache` / `pull` |
 | `GET /projects/{id}/services/{svc}` | inspect |
 
 ## Files
