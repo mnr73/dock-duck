@@ -85,6 +85,7 @@ func run(addr, cfgPath string) error {
 			Jobs:     jobs.New(docker),
 			Events:   events.New(docker),
 			Ports:    &ports.Service{Docker: docker},
+			Streamer: docker,
 		}),
 		ReadHeaderTimeout: 10 * time.Second,
 	}

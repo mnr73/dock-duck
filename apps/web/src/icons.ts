@@ -35,6 +35,15 @@ export { default as IconExternal } from "~icons/lucide/external-link";
 export { default as IconCopy } from "~icons/lucide/copy";
 export { default as IconInspect } from "~icons/lucide/scan-search";
 export { default as IconPause } from "~icons/lucide/pause";
+export { default as IconDownload } from "~icons/lucide/download";
+/** clear visible output */
+export { default as IconClear } from "~icons/lucide/eraser";
+/** follow / scroll to newest */
+export { default as IconFollow } from "~icons/lucide/arrow-down-to-line";
+export { default as IconWrap } from "~icons/lucide/wrap-text";
+export { default as IconTimestamp } from "~icons/lucide/clock";
+export { default as IconRegex } from "~icons/lucide/regex";
+export { default as IconFilter } from "~icons/lucide/list-filter";
 
 /* ------------------------------- Navigation ------------------------------- */
 export { default as IconChevronRight } from "~icons/lucide/chevron-right";

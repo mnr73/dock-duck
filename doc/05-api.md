@@ -41,6 +41,7 @@ Context selection: header `X-Docker-Context: <name>` or query `?context=<name>` 
 ## Ports, jobs, registries, settings
 | | |
 |---|---|
+| `GET /projects/{id}/logs/download?services=&since=&tail=` | plain-text attachment of the log history |
 | `GET /ports` | `[{host_ips[],host_port,container_port,proto,project?,service?,container,container_id,image}]`, running containers only |
 | `GET /jobs`, `GET /jobs/{id}` | `{id,project,action,services,status: running|succeeded|failed,error,started_at,ended_at}` |
 | `GET /registries` | `[{url,username?,store}]` (never secrets) |
@@ -52,6 +53,6 @@ Context selection: header `X-Docker-Context: <name>` or query `?context=<name>` 
 | Path | Direction / frames |
 |---|---|
 | `/events` | server→client JSON: `{type:"container", action, project, service, ...}` |
-| `/projects/{id}/logs?services=a,b&tail=200&timestamps=1` | server→client text lines |
+| `/projects/{id}/logs?services=a,b&tail=500\|all&since=15m` | server→client JSON arrays `[{s,t,m}]` (batched), then `{"type":"end","error"?}` |
 | `/projects/{id}/exec?service=app&user=1000&cmd=...&cols=&rows=` | binary = PTY bytes both ways; text = `{"type":"resize","cols":,"rows":}` |
 | `/jobs/{id}` | server→client output lines, then `{type:"done",ok:bool}` |

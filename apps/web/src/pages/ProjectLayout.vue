@@ -75,7 +75,7 @@ function confirmDown(o: { volumes: boolean; removeOrphans: boolean }) {
 </script>
 
 <template>
-  <div v-if="project" class="relative flex min-h-full flex-col">
+  <div v-if="project" class="relative flex h-full min-h-0 flex-col">
     <ProjectHeader :project="project">
       <template #actions>
         <Btn
@@ -138,11 +138,13 @@ function confirmDown(o: { volumes: boolean; removeOrphans: boolean }) {
       </Alert>
     </div>
 
-    <RouterView
-      :project="project"
-      :detail="detail"
-      @inspect="inspectService = $event"
-    />
+    <div class="flex min-h-0 flex-1 flex-col overflow-auto">
+      <RouterView
+        :project="project"
+        :detail="detail"
+        @inspect="inspectService = $event"
+      />
+    </div>
 
     <button
       v-if="jobs.current && !jobs.drawerOpen"

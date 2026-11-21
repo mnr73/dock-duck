@@ -84,9 +84,18 @@ Notes (as built):
 - Still open: log/exec targets of the row menu (Phases 5/7), `Pull`/`Build` buttons, Services tab is identical to Overview.
 
 ## Phase 5 — Logs (1–2 d)
-- [ ] WS streaming, service filter, timestamps, search/highlight, pause/resume, clear, autoscroll, copy, download
-- [ ] Virtualised rendering, ANSI colours, bounded buffer
-- [ ] Always-dark surface (board 04)
+- [x] WS streaming, service filter, timestamps, search/highlight, pause/resume, clear, autoscroll, copy, download
+- [x] Virtualised rendering, ANSI colours, bounded buffer
+- [x] Always-dark surface (board 04)
+
+Notes (as built):
+- Backend: `GET /ws/v1/projects/{id}/logs?services=a,b&tail=500|all&since=15m|<RFC3339>` runs `docker compose logs -f --timestamps --no-color` and sends **batched JSON arrays** `[{s,t,m}]` every 60 ms (max 500 per frame); a final `{"type":"end","error"?}` frame follows when docker's process exits. `GET /api/v1/projects/{id}/logs/download` returns a plain-text attachment (`<service> | <time> <message>`). `tail` is capped at 20 000, `services`/`since` are validated (argv only), foreign Origins get 403. Compose's line prefix (container name, or `proj-svc-N`) is mapped back to the service name using the project detail.
+- Frontend: `useLogStream` (VueUse `useWebSocket`) keeps at most 20 000 lines; **pause** keeps collecting into a side buffer ("Paused · N new lines buffered") and resume flushes; any option change (services/since/context) restarts the stream with an empty buffer; an `end` frame shows `ended` + a Reconnect button. `LogView` uses VueUse `useVirtualList` (fixed 20 px rows, ~64 DOM rows for thousands of lines) on an always-dark surface (`--dd-term-*`, also in light theme).
+- Toolbar: live/paused/ended/not-running pill, service multi-select (per-service colours), level (all / warn+ / error), since, search (debounced, escaped plain text or regex, match counter, invalid regex shown inline, Ctrl+F focuses it), timestamps, wrap, follow, pause/resume, clear, download. Click selects a line, shift-click a range, Copy puts `service | time message` lines on the clipboard, Esc clears the selection.
+- Follow: pinned to the newest line; scrolling up (wheel or scrollbar) turns it off and a "Jump to latest" button appears; scrolling back to the bottom turns it on again. Filtering/clearing clamps the scroll offset (otherwise the virtual window rendered nothing until the next scroll event).
+- Severity is heuristic (`utils/logs.ts`): `error`/`fatal`/`panic`/`Traceback`, JSON/logfmt `level=`, Apache `[mod:error]`, PHP; warn also covers `deprecated`, `failed`, `refused`, `timeout` and Apache `AH00558`. 28 vitest cases cover levels, search/highlight, formatting and the stream composable (mocked socket).
+- Verified in a real browser on a throwaway project and on real (read-only) erp-back history: live streaming with follow, 64 DOM rows, scroll-up/jump, pause/resume buffering, level filter, plain+regex search, invalid regex, service filter (+URL `?service=`), selection + copy (clipboard contents checked), clear (stream continues), download endpoint, `end` after `down`, stream opened on a stopped project picks up lines once a container starts, light-theme empty state.
+- Known limits: log timestamps are shown in local time without the date (the date is in the downloaded file and the copy); search is client-side over the buffered lines only (not the whole history on the server); one WebSocket + one `compose logs` process per open viewer.
 
 ## Phase 6 — Editors: compose + env (2–3 d)
 - [ ] CodeMirror 6: YAML highlight, line numbers, search, indent, dirty indicator, save/discard (board 02)

@@ -92,3 +92,36 @@ func TestRootsAndProjects(t *testing.T) {
 type fakeDocker struct{ dockercli.Runner }
 
 func (fakeDocker) UseContext(context.Context, string) error { return nil }
+
+func TestLabelMapper(t *testing.T) {
+	d := projects.Detail{Project: projects.Project{Name: "erp"}, Services: []projects.ComposeService{
+		{Name: "laravel", Containers: []projects.Container{{Name: "shivaerp-laravel"}}},
+		{Name: "queue", Containers: []projects.Container{{Name: "erp-queue-1"}, {Name: "erp-queue-2"}}},
+	}}
+	m := labelMapper(d)
+	for in, want := range map[string]string{
+		"shivaerp-laravel": "laravel", // container_name set
+		"erp-queue-2":      "queue",   // project-service-N
+		"queue-1":          "queue",   // service-N
+		"laravel":          "laravel",
+		"mystery":          "mystery",
+	} {
+		if got := m(in); got != want {
+			t.Errorf("%q -> %q, want %q", in, got, want)
+		}
+	}
+}
+
+func TestLogOptions(t *testing.T) {
+	r := httptest.NewRequest("GET", "/x?services=a,b&tail=50&since=10m", nil)
+	o := logOptions(r, true)
+	if len(o.Services) != 2 || o.Tail != 50 || o.Since != "10m" || !o.Follow {
+		t.Errorf("%+v", o)
+	}
+	if o := logOptions(httptest.NewRequest("GET", "/x?tail=all", nil), false); o.Tail != -1 {
+		t.Errorf("tail=all: %+v", o)
+	}
+	if o := logOptions(httptest.NewRequest("GET", "/x?tail=-5", nil), false); o.Tail != 200 {
+		t.Errorf("negative tail must fall back to default: %+v", o)
+	}
+}
