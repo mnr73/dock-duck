@@ -1,5 +1,6 @@
 node_modules/
 dist/
+!apps/server/internal/webui/dist/
 /bin/
 *.log
 .env

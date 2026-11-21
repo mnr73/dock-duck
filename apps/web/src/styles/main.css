@@ -1,0 +1,15 @@
+@import "tailwindcss";
+@import "./tokens.css";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+html,
+body,
+#app {
+    height: 100%;
+}
+body {
+    background: var(--dd-bg);
+    color: var(--dd-fg);
+    font-family: system-ui, sans-serif;
+}

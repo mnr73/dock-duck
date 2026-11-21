@@ -1,0 +1,47 @@
+// Package api wires HTTP routes.
+package api
+
+import (
+	"encoding/json"
+	"log/slog"
+	"net/http"
+	"time"
+)
+
+// Info is static build/runtime metadata exposed by /api/v1/health.
+type Info struct {
+	Version string
+}
+
+// New returns the root handler: /api/v1/* is the API, everything else goes to ui.
+func New(info Info, ui http.Handler) http.Handler {
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /api/v1/health", func(w http.ResponseWriter, r *http.Request) {
+		WriteJSON(w, http.StatusOK, map[string]any{"ok": true, "version": info.Version})
+	})
+	mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
+		WriteError(w, http.StatusNotFound, "not_found", "unknown API endpoint")
+	})
+	mux.Handle("/", ui)
+	return logRequests(mux)
+}
+
+// WriteJSON writes v as JSON.
+func WriteJSON(w http.ResponseWriter, status int, v any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(v)
+}
+
+// WriteError writes the standard error envelope.
+func WriteError(w http.ResponseWriter, status int, code, msg string) {
+	WriteJSON(w, status, map[string]any{"error": map[string]string{"code": code, "message": msg}})
+}
+
+func logRequests(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		next.ServeHTTP(w, r)
+		slog.Debug("request", "method", r.Method, "path", r.URL.Path, "dur", time.Since(start))
+	})
+}

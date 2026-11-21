@@ -9,7 +9,7 @@ dock-duck/
 ├─ doc/                         # plans, API, design (this folder)
 │  └─ design/DockDuck.html
 ├─ apps/
-│  ├─ server/                   # Go module: github.com/<you>/dockduck
+│  ├─ server/                   # Go module: dockduck
 │  │  ├─ go.mod
 │  │  ├─ cmd/dockduck/          # main.go: flags, config, wiring
 │  │  └─ internal/

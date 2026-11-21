@@ -1,0 +1,15 @@
+/* Design tokens. Placeholder values; real palette is extracted from doc/design/DockDuck.html in Phase 3. */
+:root {
+    --dd-bg: #fafafa;
+    --dd-fg: #18181b;
+    --dd-muted: #71717a;
+    --dd-border: #e4e4e7;
+    --dd-accent: #ca8a04;
+}
+.dark {
+    --dd-bg: #0b0b0d;
+    --dd-fg: #fafafa;
+    --dd-muted: #a1a1aa;
+    --dd-border: #27272a;
+    --dd-accent: #facc15;
+}

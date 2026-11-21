@@ -23,13 +23,15 @@ A monorepo: Go backend (`apps/server`) + Vue 3 frontend (`apps/web`), shipped as
 - Design tokens come from `doc/design/DockDuck.html`; dark is primary, light is complete, log/terminal surfaces are always dark.
 - Commits: Conventional Commits. Do not commit on the user's behalf; he commits himself.
 
-## Commands (once scaffolded)
-- `make dev` — Go server (air/`go run`) + Vite dev server with proxy
+## Commands
+- `make dev` — prints how to run: `go run ./cmd/dockduck --dev` in apps/server and `pnpm dev` in apps/web (Vite on :5173 proxies /api,/ws to :8080)
 - `make build` — build web, embed, build `bin/dockduck`
 - `make test` / `make lint`
 
 ## Environment notes
-- Go is not yet installed on the dev machine; install it before Phase 0 (`doc/04-phases.md`).
+- Go lives in `~/.local/go` (PATH set in ~/.zshrc; Go 1.26). go.dev and dl.google.com are unreachable from here; Go module proxy is set to goproxy.cn (`go env GOPROXY`). If you need another toolchain, use https://mirrors.aliyun.com/golang/.
+- TypeScript must stay on ^6 until typescript-eslint/vue-tsc support TS 7.
+- The Go shell tool may have a stale cwd; pass an explicit workdir.
 - Network to registries (npm/Go proxy/Docker Hub) is slow; run installs in the background.
 - Don't run tests that touch the real Docker daemon against the user's running stacks; integration tests use their own throwaway compose project (`dockduck-test-*`).
 

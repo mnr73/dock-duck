@@ -3,13 +3,15 @@
 Each phase ends with something runnable. Tick boxes as you go.
 
 ## Phase 0 — Scaffold (½ day)
-- [ ] Install Go ≥ 1.23 (not installed yet), pnpm present (12.x)
-- [ ] `apps/server`: `go mod init`, `cmd/dockduck/main.go`, `/api/v1/health`, flags (`--addr`, `--config`, `--dev`)
-- [ ] `apps/web`: Vite + Vue 3 + TS + Tailwind v4 + Pinia + Router + **@vueuse/core** + unplugin-icons with `@iconify-json/lucide`; ESLint/Prettier/sort-imports config taken from shiva-connect (not erp-front)
-- [ ] `src/icons.ts`: single module re-exporting every icon with a semantic name + icons tree-shaking vite plugin
-- [ ] `go:embed` of `dist`, SPA fallback, dev proxy (Vite → :8080)
-- [ ] Makefile works: `make build` yields one binary serving the SPA
-- [ ] CI: lint + test + build
+- [x] Install Go ≥ 1.23 (installed to ~/.local/go from the aliyun mirror: go.dev/dl and dl.google.com are blocked here; GOPROXY=goproxy.cn), pnpm present (12.x)
+- [x] `apps/server`: `go mod init`, `cmd/dockduck/main.go`, `/api/v1/health`, flags (`--addr`, `--config`, `--dev`)
+- [x] `apps/web`: Vite + Vue 3 + TS + Tailwind v4 + Pinia + Router + **@vueuse/core** + unplugin-icons with `@iconify-json/lucide`; ESLint/Prettier/sort-imports config taken from shiva-connect (not erp-front)
+- [x] `src/icons.ts`: single module re-exporting every icon with a semantic name + icons tree-shaking vite plugin
+- [x] `go:embed` of `dist`, SPA fallback, dev proxy (Vite → :8080)
+- [x] Makefile works: `make build` yields one binary serving the SPA
+- [x] CI: lint + test + build
+
+Notes: TypeScript pinned to ^6 (typescript-eslint/vue-tsc do not support TS 7 yet). Go module name is `dockduck` (local, not published). Pinia 4, vue-router 5, VueUse 15, Vite 8, Tailwind 4.
 
 ## Phase 1 — Docker core: contexts + discovery (1–2 d)
 - [ ] `dockercli` wrapper (timeouts, `--context`, JSON output, fake for tests)
