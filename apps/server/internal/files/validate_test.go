@@ -3,6 +3,7 @@ package files
 import (
 	"context"
 	"errors"
+	"os"
 	"os/exec"
 	"strings"
 	"testing"
@@ -89,8 +90,14 @@ func TestValidateComposeBuildsArgvAndFeedsEditedFileViaStdin(t *testing.T) {
 	}
 }
 
-// Runs the real docker CLI if present (skipped otherwise): config validation needs no daemon.
+// Runs the real docker CLI: config validation needs no daemon. Opt-in with
+// DOCKDUCK_REAL_DOCKER=1, because the wording and line numbers of Compose's own
+// errors change between Compose versions, so this must not decide whether a build
+// passes on a machine whose Compose we do not control (CI runners).
 func TestValidateComposeAgainstRealDocker(t *testing.T) {
+	if os.Getenv("DOCKDUCK_REAL_DOCKER") != "1" {
+		t.Skip("set DOCKDUCK_REAL_DOCKER=1 to run against the installed docker compose")
+	}
 	if _, err := exec.LookPath("docker"); err != nil {
 		t.Skip("no docker")
 	}
