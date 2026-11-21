@@ -66,7 +66,7 @@ func (h *dockerHandlers) envUsage(r *http.Request, ctxName string, p projects.Pr
 	if json.Unmarshal(b, &cfg) != nil {
 		return out
 	}
-	var svcs []string
+	svcs := []string{} // never nil: a nil slice is JSON null and the UI reads .length
 	for name, s := range cfg.Services {
 		if usesDotEnv(s.EnvFile) {
 			svcs = append(svcs, name)
@@ -107,7 +107,7 @@ func usesDotEnv(v any) bool {
 // interpolatedVars finds ${NAME} / $NAME references in the (non-interpolated) config text.
 func interpolatedVars(text string) []string {
 	seen := map[string]bool{}
-	var out []string
+	out := []string{} // never nil (JSON null)
 	for i := 0; i < len(text)-2; i++ {
 		if text[i] != '$' {
 			continue
