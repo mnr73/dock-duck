@@ -1,6 +1,7 @@
 import { watchEffect } from "vue";
 
 import { usePrefsStore } from "@/stores/prefs";
+import { brandDataUrl } from "@/utils/brand";
 
 import { useTheme } from "./useTheme";
 
@@ -36,5 +37,12 @@ export function useAppearance() {
                 root.style.removeProperty(k);
         }
         root.dataset.density = prefs.density;
+
+        // the tab icon follows the accent too
+        const icon = document.querySelector<HTMLLinkElement>("link[rel=icon]");
+        if (icon)
+            icon.href = prefs.accent
+                ? brandDataUrl(prefs.accent)
+                : "/favicon.svg";
     });
 }

@@ -1,8 +1,23 @@
 <script setup lang="ts">
-import logo from "@/assets/logo.svg";
+import { computed } from "vue";
+
+import { usePrefsStore } from "@/stores/prefs";
+import { brandSvg } from "@/utils/brand";
+
+const prefs = usePrefsStore();
+/** the supplied duck, recoloured with the chosen accent (a trusted local asset) */
+const svg = computed(() => brandSvg(prefs.accent));
 </script>
 
 <template>
-  <!-- the multi-colour brand duck: a plain image, not a themed Lucide icon -->
-  <img :src="logo" alt="DockDuck" draggable="false" />
+  <!-- eslint-disable-next-line vue/no-v-html -->
+  <span role="img" aria-label="DockDuck" class="inline-block" v-html="svg" />
 </template>
+
+<style scoped>
+span :deep(svg) {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+</style>
