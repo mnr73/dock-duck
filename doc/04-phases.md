@@ -14,12 +14,20 @@ Each phase ends with something runnable. Tick boxes as you go.
 Notes: TypeScript pinned to ^6 (typescript-eslint/vue-tsc do not support TS 7 yet). Go module name is `dockduck` (local, not published). Pinia 4, vue-router 5, VueUse 15, Vite 8, Tailwind 4.
 
 ## Phase 1 — Docker core: contexts + discovery (1–2 d)
-- [ ] `dockercli` wrapper (timeouts, `--context`, JSON output, fake for tests)
-- [ ] Contexts: list, inspect, ping/availability, switch (app-level selection), default from settings; optional opt-in sync via `docker context use`; no create/remove
-- [ ] Config file + roots CRUD (`GET/POST/DELETE /roots`), rescan
-- [ ] Discovery walk + merge with `compose ls -a`; project model (name, dir, files, env file)
-- [ ] Tests with fake docker + temp dirs
+- [x] `dockercli` wrapper (timeouts, `--context`, JSON output, fake for tests)
+- [x] Contexts: list, inspect, ping/availability, switch (app-level selection), default from settings; optional opt-in sync via `docker context use`; no create/remove
+- [x] Config file + roots CRUD (`GET/POST/DELETE /roots`), rescan
+- [x] Discovery walk + merge with `compose ls -a`; project model (name, dir, files, env file)
+- [x] Tests with fake docker + temp dirs
 - **Done when:** `curl /api/v1/projects` lists real projects from `~/prj`.
+
+Notes (as built):
+- `dockercli.Client.Output` refuses `docker context create/rm/update/import/use`; only `UseContext` can run `use` (opt-in `sync_cli`). Names/IDs validated by `dockercli.ValidName`.
+- Selected context resolution: saved selection → `default_context` setting → Docker CLI current → first.
+- Project state in this phase is the coarse `compose ls -a` status (running/partial/stopped + counts); per-service state comes in Phase 2. Projects known only to Docker (outside roots) are listed with `root` empty.
+- Discovery skips hidden dirs, `node_modules`, `vendor`, `dist`, `build`, `target`, venvs; stops descending at a project; roots must be absolute existing dirs (symlinks resolved).
+- Verified on the real machine: 27 projects found under ~/prj, erp-back 4/4 running.
+- Endpoints live now: `GET /contexts`, `PUT /contexts/selected`, `GET|POST /roots`, `DELETE /roots/{id}`, `POST /roots/rescan`, `GET /projects`.
 
 ## Phase 2 — Project state + actions (2 d)
 - [ ] Project/service state from `ps -a` (status, health, image, ports, container names)

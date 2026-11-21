@@ -6,6 +6,10 @@ import (
 	"log/slog"
 	"net/http"
 	"time"
+
+	"dockduck/internal/config"
+	"dockduck/internal/contexts"
+	"dockduck/internal/projects"
 )
 
 // Info is static build/runtime metadata exposed by /api/v1/health.
@@ -13,9 +17,20 @@ type Info struct {
 	Version string
 }
 
-// New returns the root handler: /api/v1/* is the API, everything else goes to ui.
-func New(info Info, ui http.Handler) http.Handler {
+// Deps are the services the API exposes. Nil services leave their routes unregistered.
+type Deps struct {
+	Info     Info
+	UI       http.Handler
+	Store    *config.Store
+	Contexts *contexts.Service
+	Projects *projects.Service
+}
+
+// New returns the root handler: /api/v1/* is the API, everything else goes to UI.
+func New(d Deps) http.Handler {
+	info, ui := d.Info, d.UI
 	mux := http.NewServeMux()
+	registerDocker(mux, d)
 	mux.HandleFunc("GET /api/v1/health", func(w http.ResponseWriter, r *http.Request) {
 		WriteJSON(w, http.StatusOK, map[string]any{"ok": true, "version": info.Version})
 	})

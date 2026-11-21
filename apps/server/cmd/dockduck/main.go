@@ -15,6 +15,10 @@ import (
 	"time"
 
 	"dockduck/internal/api"
+	"dockduck/internal/config"
+	"dockduck/internal/contexts"
+	"dockduck/internal/dockercli"
+	"dockduck/internal/projects"
 	"dockduck/internal/webui"
 )
 
@@ -24,6 +28,7 @@ var version = "dev"
 func main() {
 	addr := flag.String("addr", "127.0.0.1:8080", "listen address")
 	dev := flag.Bool("dev", false, "development mode (debug logs; UI is served by the Vite dev server)")
+	cfgPath := flag.String("config", "", "config file (default: <user config dir>/dockduck/config.json)")
 	showVersion := flag.Bool("version", false, "print version and exit")
 	flag.Parse()
 
@@ -38,13 +43,13 @@ func main() {
 	}
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: level})))
 
-	if err := run(*addr); err != nil {
+	if err := run(*addr, *cfgPath); err != nil {
 		slog.Error("fatal", "err", err)
 		os.Exit(1)
 	}
 }
 
-func run(addr string) error {
+func run(addr, cfgPath string) error {
 	// Phase 8 adds auth; until then only loopback binds are allowed.
 	host, _, err := net.SplitHostPort(addr)
 	if err != nil {
@@ -54,9 +59,26 @@ func run(addr string) error {
 		return errors.New("refusing to bind a non-loopback address before auth is implemented (Phase 8)")
 	}
 
+	if cfgPath == "" {
+		if cfgPath, err = config.DefaultPath(); err != nil {
+			return err
+		}
+	}
+	store, err := config.Open(cfgPath)
+	if err != nil {
+		return fmt.Errorf("config %s: %w", cfgPath, err)
+	}
+	docker := dockercli.New()
+
 	srv := &http.Server{
-		Addr:              addr,
-		Handler:           api.New(api.Info{Version: version}, webui.Handler()),
+		Addr: addr,
+		Handler: api.New(api.Deps{
+			Info:     api.Info{Version: version},
+			UI:       webui.Handler(),
+			Store:    store,
+			Contexts: &contexts.Service{Docker: docker, Store: store},
+			Projects: &projects.Service{Docker: docker, Store: store},
+		}),
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 
