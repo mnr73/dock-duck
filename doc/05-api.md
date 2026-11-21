@@ -6,9 +6,20 @@ Context selection: header `X-Docker-Context: <name>` or query `?context=<name>` 
 ## Auth
 | | |
 |---|---|
-| `GET /auth/status` | `{setup_required, authenticated, user}` |
-| `POST /auth/setup` | first-run password |
-| `POST /auth/login` / `POST /auth/logout` | |
+| `GET /auth/status` | `{configured, required, authenticated, setup_here, csrf?}` (public; `csrf` only for a logged-in browser) |
+| `POST /auth/setup {password}` | first password, loopback clients only; 409 if one exists; 400 `weak_password` |
+| `POST /auth/login {password}` | 401 `bad_credentials`, 429 `locked` / `busy` with `Retry-After` |
+| `POST /auth/logout` | needs the CSRF token |
+| `POST /auth/password {current, next}` | ends all other sessions, returns a fresh session |
+
+Everything under `/api/` and `/ws/` except `/api/v1/health` and `/api/v1/auth/*` needs the session cookie once a password exists (401 `unauthenticated`); state-changing requests also need `X-CSRF-Token` (403 `bad_csrf`). Without a password and on loopback the API stays open.
+
+## Registries
+| | |
+|---|---|
+| `GET /registries` | `{config_path, store, plaintext, entries[{server,name,hub,username?,store}]}`: never a secret |
+| `POST /registries/login {server?, username, password}` | `server` empty = Docker Hub; 422 `registry_refused` carries docker's message |
+| `POST /registries/logout {server?}` | 204 |
 
 ## Contexts
 | | |

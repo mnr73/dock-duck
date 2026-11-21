@@ -99,3 +99,11 @@ export { default as IconOpenWindow } from "~icons/lucide/app-window";
 export { default as IconUserDefault } from "~icons/lucide/user";
 export { default as IconFontSmaller } from "~icons/lucide/a-arrow-down";
 export { default as IconFontLarger } from "~icons/lucide/a-arrow-up";
+
+/* ------------------------------- Account ---------------------------------- */
+export { default as IconLogout } from "~icons/lucide/log-out";
+export { default as IconKey } from "~icons/lucide/key-round";
+export { default as IconShield } from "~icons/lucide/shield-check";
+
+/* ------------------------------- Registries ------------------------------- */
+export { default as IconSignIn } from "~icons/lucide/log-in";

@@ -121,9 +121,14 @@ Follow-up (after Phase 5):
 - [x] Browser guard (needed once an exec endpoint exists, before real auth): state-changing requests with a foreign `Origin` / `Sec-Fetch-Site` are refused (CSRF via `text/plain`), and the `Host` must be localhost / an IP literal (DNS rebinding)
 - Defaults for the dialog (user, shell) are kept in the browser for now; Phase 9 moves them into Settings.
 
-## Phase 8 — Auth (2 d)
-- [ ] App auth: first-run setup (password), argon2id, session cookie, CSRF, rate-limit, logout; refuse non-loopback bind without password
-- [ ] Registries (board 08): status from `~/.docker/config.json` (names only), `docker login --password-stdin`, `logout`, Docker Hub preset, error feedback
+## Phase 8 — Auth + registries (2 d) — done
+- [x] App login: argon2id (m=64 MiB, t=3, p=2; verify reads the parameters from the stored PHC hash and bounds them, so a crafted config cannot exhaust memory), min 10 characters. Sessions are in memory only (a restart logs everyone out), tokens stored hashed, HttpOnly + SameSite=Strict cookie (`Secure` behind TLS / `X-Forwarded-Proto: https`), idle 12 h + absolute 7 d, bound to the password: changing it ends every session
+- [x] CSRF: every state-changing request needs `X-CSRF-Token` (per session) on top of the Origin/Host guard; logout and password change too. WebSocket upgrades need the cookie and a same-origin `Origin`, and **are closed when the session ends** (logout, password change, `dockduck passwd`), so an open terminal does not outlive the login
+- [x] Throttling: 4 free attempts per client, then 5 s doubling to 15 min (IPv6 grouped by /64); a global cap of 100 failures / 10 min stops address rotation; while locked even the right password is refused; at most 4 argon2 checks at once. UI shows the lock countdown from `Retry-After`
+- [x] Modes: loopback without a password stays open (as before) with a warning and a "Set password" button; **a non-loopback bind (`0.0.0.0`, `:port`, a LAN IP) refuses to start without a password**, and a networked server never runs open even if the password vanishes from the config. First-run setup is local-only (a remote browser cannot claim a fresh server). `dockduck passwd` (prompt or piped stdin) sets/resets the password and is the recovery path; a running server notices the config change within a second
+- [x] Login screen with first-run setup, no flash of the app before the server says who you are, auto switch to the login screen when the session ends (events socket closes), Settings: set / change password, sign out
+- [x] Registries: list from `~/.docker/config.json` (+ credential helpers' `list`), **names and usernames only: the stored secret is never read into the response**; sign in via `docker login --username U --password-stdin` (secret on stdin only: not in argv, not in logs, scrubbed from error text when a registry echoes it back); Docker Hub preset, re-authenticate, sign out; warns when docker keeps credentials unencrypted; docker's own error (401 ...) is shown. Verified against a real throwaway `registry:2` with basic auth and an isolated `DOCKER_CONFIG` (the real login file was untouched)
+- Not done on purpose: TLS in the binary (use a reverse proxy; `Secure` cookies are handled), multi-user accounts.
 
 ## Phase 9 — Settings + polish (1–2 d)
 - [ ] Settings (board 09): theme, scan config, terminal defaults, default context, behaviour

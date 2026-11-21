@@ -61,8 +61,8 @@ export const router = createRouter({
         },
         {
             path: "/registries",
-            component: () => import("@/pages/ComingSoonPage.vue"),
-            props: { title: "Registries", phase: "Phase 8" },
+            name: "registries",
+            component: () => import("@/pages/RegistriesPage.vue"),
         },
         {
             path: "/settings",

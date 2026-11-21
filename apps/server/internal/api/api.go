@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"dockduck/internal/auth"
 	"dockduck/internal/config"
 	"dockduck/internal/contexts"
 	"dockduck/internal/dockercli"
@@ -15,6 +16,7 @@ import (
 	"dockduck/internal/jobs"
 	"dockduck/internal/ports"
 	"dockduck/internal/projects"
+	"dockduck/internal/registries"
 	"dockduck/internal/terminal"
 )
 
@@ -26,19 +28,21 @@ type Info struct {
 
 // Deps are the services the API exposes. Nil services leave their routes unregistered.
 type Deps struct {
-	Info      Info
-	UI        http.Handler
-	Store     *config.Store
-	Contexts  *contexts.Service
-	Projects  *projects.Service
-	Jobs      *jobs.Manager
-	Events    *events.Hub
-	Ports     *ports.Service
-	Streamer  dockercli.Streamer // long-running docker commands (logs)
-	Stdin     files.StdinRunner  // compose validation of unsaved content
-	Runner    dockercli.Runner   // one-shot docker commands (terminal cleanup)
-	Terminals *terminal.Manager  // interactive exec sessions
-	DockerBin string             // docker binary for exec sessions (default "docker")
+	Info       Info
+	UI         http.Handler
+	Store      *config.Store
+	Contexts   *contexts.Service
+	Projects   *projects.Service
+	Jobs       *jobs.Manager
+	Events     *events.Hub
+	Ports      *ports.Service
+	Streamer   dockercli.Streamer  // long-running docker commands (logs)
+	Stdin      files.StdinRunner   // compose validation of unsaved content
+	Runner     dockercli.Runner    // one-shot docker commands (terminal cleanup)
+	Terminals  *terminal.Manager   // interactive exec sessions
+	DockerBin  string              // docker binary for exec sessions (default "docker")
+	Auth       *auth.Service       // nil = no login at all (tests, embedding)
+	Registries *registries.Service // docker login/logout and the signed-in list
 	// SystemTerminal overrides native-terminal detection (tests).
 	SystemTerminal func() *terminal.SystemTerminal
 }
@@ -48,6 +52,9 @@ func New(d Deps) http.Handler {
 	info, ui := d.Info, d.UI
 	mux := http.NewServeMux()
 	registerDocker(mux, d)
+	if d.Auth != nil {
+		registerAuth(mux, d.Auth)
+	}
 	mux.HandleFunc("GET /api/v1/health", func(w http.ResponseWriter, r *http.Request) {
 		WriteJSON(w, http.StatusOK, map[string]any{"ok": true, "version": info.Version, "home": info.Home})
 	})
@@ -60,7 +67,11 @@ func New(d Deps) http.Handler {
 	mux.HandleFunc("/api/", notFound)
 	mux.HandleFunc("/ws/", notFound)
 	mux.Handle("/", ui)
-	return logRequests(guardBrowser(mux))
+	var h http.Handler = mux
+	if d.Auth != nil {
+		h = requireAuth(d.Auth, h)
+	}
+	return logRequests(guardBrowser(h))
 }
 
 // WriteJSON writes v as JSON.

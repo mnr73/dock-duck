@@ -131,7 +131,9 @@ func (h *dockerHandlers) jobStream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer c.CloseNow()
-	ctx := c.CloseRead(r.Context())
+	base, stop := sessionContext(r)
+	defer stop()
+	ctx := c.CloseRead(base)
 
 	pos := 0
 	for {
@@ -176,7 +178,9 @@ func (h *dockerHandlers) eventStream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer c.CloseNow()
-	ctx := c.CloseRead(r.Context())
+	base, stop := sessionContext(r)
+	defer stop()
+	ctx := c.CloseRead(base)
 
 	ch, unsubscribe := h.Events.Subscribe(ctxName)
 	defer unsubscribe()

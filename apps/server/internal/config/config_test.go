@@ -2,6 +2,7 @@ package config
 
 import (
 	"errors"
+	"os"
 	"path/filepath"
 	"testing"
 )
@@ -35,5 +36,29 @@ func TestStoreRoundTrip(t *testing.T) {
 	}
 	if s2.Get().SelectedContext != "colima" {
 		t.Fatal("failed update must not change state")
+	}
+}
+
+func TestRefreshPicksUpExternalChanges(t *testing.T) {
+	p := filepath.Join(t.TempDir(), "config.json")
+	s, _ := Open(p)
+	_ = s.Update(func(c *Config) error { c.SelectedContext = "a"; return nil })
+	if s.Refresh() {
+		t.Error("our own write is not an external change")
+	}
+	// another process (dockduck passwd) edits the file
+	if err := os.WriteFile(p, []byte(`{"selected_context":"b","auth":{"password_hash":"h"}}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if !s.Refresh() || s.Get().SelectedContext != "b" || s.Get().Auth.PasswordHash != "h" {
+		t.Errorf("reload: %+v", s.Get())
+	}
+	if s.Get().Settings.ScanDepth != DefaultScanDepth {
+		t.Error("defaults survive a reload")
+	}
+	// a half-written file must not break a running server
+	_ = os.WriteFile(p, []byte(`{"selected_con`), 0o600)
+	if s.Refresh() || s.Get().SelectedContext != "b" {
+		t.Error("an unparsable file is ignored")
 	}
 }

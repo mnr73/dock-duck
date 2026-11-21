@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 )
 
 // Root is a directory scanned for Compose projects.
@@ -25,11 +26,17 @@ type Settings struct {
 	ScanDepth      int    `json:"scan_depth"` // max directory depth below a root
 }
 
+// Auth holds the app login. Only a hash is stored (argon2id, PHC string).
+type Auth struct {
+	PasswordHash string `json:"password_hash,omitempty"`
+}
+
 // Config is the whole persisted document.
 type Config struct {
 	Roots           []Root   `json:"roots"`
 	Settings        Settings `json:"settings"`
 	SelectedContext string   `json:"selected_context"`
+	Auth            Auth     `json:"auth"`
 }
 
 // DefaultScanDepth is used when Settings.ScanDepth is unset.
@@ -55,6 +62,20 @@ type Store struct {
 	path string
 	mu   sync.RWMutex
 	cfg  Config
+	sig  fileSig // what the file looked like when we last read or wrote it
+}
+
+type fileSig struct {
+	mod  time.Time
+	size int64
+}
+
+func sigOf(path string) fileSig {
+	st, err := os.Stat(path)
+	if err != nil {
+		return fileSig{}
+	}
+	return fileSig{st.ModTime(), st.Size()}
 }
 
 // Open loads path (a missing file yields defaults).
@@ -73,8 +94,40 @@ func Open(path string) (*Store, error) {
 	if s.cfg.Settings.ScanDepth <= 0 {
 		s.cfg.Settings.ScanDepth = DefaultScanDepth
 	}
+	s.sig = sigOf(path)
 	return s, nil
 }
+
+// Refresh re-reads the file when something else changed it (e.g. `dockduck passwd`
+// while the server runs). It reports whether the content was reloaded; a file that
+// cannot be parsed is ignored so a half-written edit never takes the server down.
+func (s *Store) Refresh() bool {
+	now := sigOf(s.path)
+	s.mu.RLock()
+	same := now == s.sig
+	s.mu.RUnlock()
+	if same {
+		return false
+	}
+	b, err := os.ReadFile(s.path)
+	if err != nil {
+		return false
+	}
+	var next Config
+	if err := json.Unmarshal(b, &next); err != nil {
+		return false
+	}
+	if next.Settings.ScanDepth <= 0 {
+		next.Settings.ScanDepth = DefaultScanDepth
+	}
+	s.mu.Lock()
+	s.cfg, s.sig = next, now
+	s.mu.Unlock()
+	return true
+}
+
+// Path is the file backing the store.
+func (s *Store) Path() string { return s.path }
 
 // Get returns a deep copy of the current config.
 func (s *Store) Get() Config {
@@ -99,6 +152,7 @@ func (s *Store) Update(fn func(*Config) error) error {
 		return err
 	}
 	s.cfg = next
+	s.sig = sigOf(s.path)
 	return nil
 }
 

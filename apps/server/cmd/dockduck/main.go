@@ -3,7 +3,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"flag"
 	"fmt"
 	"log/slog"
@@ -15,6 +14,7 @@ import (
 	"time"
 
 	"dockduck/internal/api"
+	"dockduck/internal/auth"
 	"dockduck/internal/config"
 	"dockduck/internal/contexts"
 	"dockduck/internal/dockercli"
@@ -22,6 +22,7 @@ import (
 	"dockduck/internal/jobs"
 	"dockduck/internal/ports"
 	"dockduck/internal/projects"
+	"dockduck/internal/registries"
 	"dockduck/internal/terminal"
 	"dockduck/internal/webui"
 )
@@ -30,6 +31,9 @@ import (
 var version = "dev"
 
 func main() {
+	if len(os.Args) > 1 && os.Args[1] == "passwd" {
+		os.Exit(runPasswd(os.Args[2:], os.Stdin, os.Stdout, os.Stderr))
+	}
 	addr := flag.String("addr", "127.0.0.1:8080", "listen address")
 	dev := flag.Bool("dev", false, "development mode (debug logs; UI is served by the Vite dev server)")
 	cfgPath := flag.String("config", "", "config file (default: <user config dir>/dockduck/config.json)")
@@ -54,14 +58,12 @@ func main() {
 }
 
 func run(addr, cfgPath string) error {
-	// Phase 8 adds auth; until then only loopback binds are allowed.
 	host, _, err := net.SplitHostPort(addr)
 	if err != nil {
 		return fmt.Errorf("invalid --addr: %w", err)
 	}
-	if ip := net.ParseIP(host); host != "localhost" && (ip == nil || !ip.IsLoopback()) {
-		return errors.New("refusing to bind a non-loopback address before auth is implemented (Phase 8)")
-	}
+	// reachable from the network = root on this machine for whoever logs in: never without a password
+	networked := !isLoopbackHost(host)
 
 	if cfgPath == "" {
 		if cfgPath, err = config.DefaultPath(); err != nil {
@@ -72,6 +74,10 @@ func run(addr, cfgPath string) error {
 	if err != nil {
 		return fmt.Errorf("config %s: %w", cfgPath, err)
 	}
+	if networked && store.Get().Auth.PasswordHash == "" {
+		return fmt.Errorf("refusing to listen on %s without a password: run `dockduck passwd` first (the Docker socket is root-equivalent)", addr)
+	}
+	authSvc := auth.NewService(store, networked)
 	docker := dockercli.New()
 	home, _ := os.UserHomeDir()
 
@@ -79,18 +85,20 @@ func run(addr, cfgPath string) error {
 	srv := &http.Server{
 		Addr: addr,
 		Handler: api.New(api.Deps{
-			Info:      api.Info{Version: version, Home: home},
-			UI:        webui.Handler(),
-			Store:     store,
-			Contexts:  &contexts.Service{Docker: docker, Store: store},
-			Projects:  &projects.Service{Docker: docker, Store: store},
-			Jobs:      jobs.New(docker),
-			Events:    events.New(docker),
-			Ports:     &ports.Service{Docker: docker},
-			Streamer:  docker,
-			Stdin:     docker,
-			Runner:    docker,
-			Terminals: terminals,
+			Info:       api.Info{Version: version, Home: home},
+			UI:         webui.Handler(),
+			Store:      store,
+			Contexts:   &contexts.Service{Docker: docker, Store: store},
+			Projects:   &projects.Service{Docker: docker, Store: store},
+			Jobs:       jobs.New(docker),
+			Events:     events.New(docker),
+			Ports:      &ports.Service{Docker: docker},
+			Streamer:   docker,
+			Stdin:      docker,
+			Runner:     docker,
+			Terminals:  terminals,
+			Auth:       authSvc,
+			Registries: &registries.Service{Docker: docker},
 		}),
 		ReadHeaderTimeout: 10 * time.Second,
 	}
@@ -100,6 +108,14 @@ func run(addr, cfgPath string) error {
 
 	errc := make(chan error, 1)
 	go func() {
+		switch {
+		case store.Get().Auth.PasswordHash != "":
+			slog.Info("login is required")
+		case networked:
+			// unreachable: refused above
+		default:
+			slog.Warn("no password is set: anyone on this machine can use DockDuck. Set one in the UI or with `dockduck passwd`")
+		}
 		slog.Info("listening", "addr", "http://"+addr, "version", version)
 		errc <- srv.ListenAndServe()
 	}()
@@ -113,4 +129,14 @@ func run(addr, cfgPath string) error {
 		defer cancel()
 		return srv.Shutdown(shutdownCtx)
 	}
+}
+
+// isLoopbackHost: localhost or a loopback IP literal. An empty host (":8080") and
+// 0.0.0.0 listen on every interface, so they are NOT loopback.
+func isLoopbackHost(host string) bool {
+	if host == "localhost" {
+		return true
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
 }

@@ -250,3 +250,36 @@ export interface SystemTerminalStatus {
     name?: string;
     reason?: string;
 }
+
+export interface AuthStatus {
+    configured: boolean;
+    /** the server is reachable from the network, so it never runs without a password */
+    required: boolean;
+    authenticated: boolean;
+    /** a first password can be set from this browser (it is on the server's own machine) */
+    setup_here: boolean;
+    csrf?: string;
+}
+
+export interface RegistryEntry {
+    server: string;
+    name: string;
+    hub: boolean;
+    username?: string;
+    store: string;
+}
+
+export interface RegistryState {
+    config_path: string;
+    store: string;
+    /** docker keeps secrets unencrypted in config.json (no credential helper) */
+    plaintext: boolean;
+    entries: RegistryEntry[];
+}
+
+export interface RegistryLoginRequest {
+    /** empty = Docker Hub */
+    server: string;
+    username: string;
+    password: string;
+}

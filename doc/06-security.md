@@ -10,3 +10,8 @@ Access to the Docker socket is root-equivalent. DockDuck therefore ships secure 
 - **Secrets**: `.env` values masked by default (heuristic on key names: PASSWORD, SECRET, TOKEN, KEY…) and only revealed via an explicit, authenticated call; registry secrets go through stdin to `docker login`, are never logged or returned. Logs redact `Authorization`/passwords.
 - **Audit**: structured log line for up/down/exec/file write/reveal/login with user + IP.
 - **Resource limits**: max concurrent log/exec streams, bounded buffers, process kill on disconnect.
+
+## As built (Phase 8)
+- Auth, sessions, CSRF, throttling and the bind rule are described in `04-phases.md` (Phase 8). Recovery of a lost password: `dockduck passwd` on the machine.
+- A hard crash (SIGKILL) of the server cannot sweep processes that terminal shells left inside containers; every normal stop (SIGTERM / Ctrl+C) does.
+- Config file `auth.password_hash` is a hash only; the file is written 0600 atomically.

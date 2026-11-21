@@ -3,6 +3,7 @@ import { IconThemeDark, IconThemeLight, IconThemeSystem } from "@/icons";
 
 import SegmentedControl from "@/components/ui/SegmentedControl.vue";
 
+import AccountSection from "@/features/auth/AccountSection.vue";
 import PageHeader from "@/features/layout/PageHeader.vue";
 
 import { type ThemeChoice, useTheme } from "@/composables/useTheme";
@@ -38,6 +39,7 @@ const options: {
           aria-label="Theme"
         />
       </section>
+      <AccountSection />
       <p class="text-[12px] text-dim">
         Scan, terminal and default-context preferences arrive with Phase 9.
       </p>

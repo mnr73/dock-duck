@@ -84,7 +84,9 @@ func (h *dockerHandlers) logStream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer c.CloseNow()
-	ctx, cancel := context.WithCancel(c.CloseRead(r.Context()))
+	base, stop := sessionContext(r)
+	defer stop()
+	ctx, cancel := context.WithCancel(c.CloseRead(base))
 	defer cancel()
 
 	lines := make(chan logs.Line, 1024)

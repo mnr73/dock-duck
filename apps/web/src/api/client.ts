@@ -6,10 +6,24 @@ export class ApiError extends Error {
         public code: string,
         message: string,
         public status: number,
+        /** seconds from a Retry-After header (login lock, busy server) */
+        public retryAfter = 0,
     ) {
         super(message);
         this.name = "ApiError";
     }
+}
+
+/** The CSRF token of the current login session; sent with every state-changing request. */
+let csrfToken = "";
+export function setCsrfToken(t: string) {
+    csrfToken = t;
+}
+
+/** Called when the server says the session is gone (401): the app shows the login screen. */
+let onUnauthorized: (() => void) | undefined;
+export function setUnauthorizedHandler(fn: () => void) {
+    onUnauthorized = fn;
 }
 
 const useApiFetch = createFetch({
@@ -24,13 +38,13 @@ async function request<T>(
     body?: unknown,
     headers: Record<string, string> = {},
 ): Promise<T> {
+    const all: Record<string, string> = { ...headers };
+    if (body !== undefined) all["Content-Type"] = "application/json";
+    if (method !== "GET" && csrfToken) all["X-CSRF-Token"] = csrfToken;
     const f = useApiFetch(path, {
         method,
         body: body === undefined ? undefined : JSON.stringify(body),
-        headers:
-            body === undefined
-                ? headers
-                : { "Content-Type": "application/json", ...headers },
+        headers: all,
     });
     await f.execute();
 
@@ -48,14 +62,17 @@ async function request<T>(
     if (status === 0) {
         throw new ApiError("network", "DockDuck server is unreachable", 0);
     }
+    if (status === 401 && !path.startsWith("/auth/")) onUnauthorized?.();
     if (status >= 400) {
         const e = (
             parsed as { error?: { code?: string; message?: string } } | null
         )?.error;
+        const ra = Number(f.response.value?.headers.get("Retry-After") ?? 0);
         throw new ApiError(
             e?.code ?? "http_error",
             e?.message ?? `HTTP ${status}`,
             status,
+            Number.isFinite(ra) ? ra : 0,
         );
     }
     return parsed as T;

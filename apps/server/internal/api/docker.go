@@ -58,6 +58,11 @@ func registerDocker(mux *http.ServeMux, d Deps) {
 		mux.HandleFunc("DELETE /api/v1/terminals/{id}", h.closeTerminal)
 		mux.HandleFunc("GET /ws/v1/terminals/{id}", h.terminalStream)
 	}
+	if d.Registries != nil {
+		mux.HandleFunc("GET /api/v1/registries", h.registryState)
+		mux.HandleFunc("POST /api/v1/registries/login", h.registryLogin)
+		mux.HandleFunc("POST /api/v1/registries/logout", h.registryLogout)
+	}
 	if d.Ports != nil {
 		mux.HandleFunc("GET /api/v1/ports", h.listPorts)
 	}

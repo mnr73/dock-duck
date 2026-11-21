@@ -3,6 +3,7 @@ import { computed, watch } from "vue";
 import { useDebounceFn, useWebSocket } from "@vueuse/core";
 
 import type { ContainerEvent } from "@/api/types";
+import { useAuthStore } from "@/stores/auth";
 import { useContextsStore } from "@/stores/contexts";
 import { useProjectsStore } from "@/stores/projects";
 
@@ -13,6 +14,7 @@ import { useProjectsStore } from "@/stores/projects";
  */
 export function useLiveEvents() {
     const projects = useProjectsStore();
+    const auth = useAuthStore();
     const contexts = useContextsStore();
 
     const touched = new Set<string>();
@@ -32,6 +34,10 @@ export function useLiveEvents() {
 
     const { status, open, close } = useWebSocket(url, {
         autoReconnect: { retries: Number.POSITIVE_INFINITY, delay: 2000 },
+        // the server closes this socket when the login session ends (logout elsewhere,
+        // password change); asking /auth/status shows the login screen right away
+        // instead of waiting for the next click to hit a 401
+        onDisconnected: () => void auth.load(),
         onMessage(_ws, e) {
             try {
                 const ev = JSON.parse(e.data) as ContainerEvent;

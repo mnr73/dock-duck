@@ -113,7 +113,7 @@ func (h *dockerHandlers) terminalStream(w http.ResponseWriter, r *http.Request) 
 	}
 	defer c.CloseNow()
 	c.SetReadLimit(1 << 20)
-	ctx, cancel := context.WithCancel(r.Context())
+	ctx, cancel := sessionContext(r) // ends when the login session is revoked
 	defer cancel()
 
 	replay, att := s.Attach()
