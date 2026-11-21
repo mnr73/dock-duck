@@ -106,7 +106,7 @@ async function saveDepth(depth: number) {
               :title="a.name"
               class="size-5 rounded-full border border-line-strong outline-offset-2"
               :class="prefs.accent === a.value ? 'outline-2 outline-fg' : ''"
-              :style="{ background: a.value ?? 'var(--color-accent)' }"
+              :style="{ background: a.swatch }"
               @click="prefs.accent = a.value"
             />
           </div>

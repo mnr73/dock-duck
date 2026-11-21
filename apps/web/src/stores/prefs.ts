@@ -4,12 +4,18 @@ import { defineStore } from "pinia";
 export type Density = "comfortable" | "compact";
 
 /** Accent swatches from the design board; `null` keeps the theme's own amber. */
-export const ACCENTS: { name: string; value: string | null }[] = [
-    { name: "Amber", value: null },
-    { name: "Periwinkle", value: "#8b91ff" },
-    { name: "Sky", value: "#5ec4f0" },
-    { name: "Mint", value: "#45c46b" },
-    { name: "Coral", value: "#ff8a6b" },
+export const ACCENTS: {
+    name: string;
+    /** stored choice; null = the theme's own amber */
+    value: string | null;
+    /** the dot in Settings: fixed, so it never follows the accent that is active now */
+    swatch: string;
+}[] = [
+    { name: "Amber", value: null, swatch: "#f2b94b" },
+    { name: "Periwinkle", value: "#8b91ff", swatch: "#8b91ff" },
+    { name: "Sky", value: "#5ec4f0", swatch: "#5ec4f0" },
+    { name: "Mint", value: "#45c46b", swatch: "#45c46b" },
+    { name: "Coral", value: "#ff8a6b", swatch: "#ff8a6b" },
 ];
 
 /**
