@@ -1,7 +1,7 @@
 # 05 — API contract (draft)
 
 Base: `/api/v1` (JSON). Auth: session cookie + `X-CSRF-Token` on mutating requests. Errors: `{ "error": { "code": "string", "message": "string" } }`.
-Context selection: header `X-Docker-Context: <name>` (falls back to the saved selection / default).
+Context selection: header `X-Docker-Context: <name>` or query `?context=<name>` (for WebSockets), falling back to the saved selection / default. `GET /health` → `{ok, version, home}`.
 
 ## Auth
 | | |

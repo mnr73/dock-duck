@@ -71,3 +71,21 @@ func TestListAndSelect(t *testing.T) {
 		t.Errorf("sync: %v %v", err, f.used)
 	}
 }
+
+func TestFriendlyError(t *testing.T) {
+	long := &dockercli.ExitError{
+		Args:   []string{"--context", "default", "version"},
+		Stderr: "failed to connect to the docker API at unix:///tmp/x.sock; check if the path is correct and if the daemon is running: dial unix /tmp/x.sock: connect: no such file or directory\n",
+		Err:    errors.New("exit status 1"),
+	}
+	if got := friendlyError(long); got != "cannot connect to unix:///tmp/x.sock" {
+		t.Errorf("got %q", got)
+	}
+	timeout := &dockercli.ExitError{Args: []string{"version"}, Err: context.DeadlineExceeded}
+	if got := friendlyError(timeout); got != "context deadline exceeded" {
+		t.Errorf("timeout: %q", got)
+	}
+	if got := friendlyError(errors.New("boom\nmore")); got != "boom" {
+		t.Errorf("plain: %q", got)
+	}
+}

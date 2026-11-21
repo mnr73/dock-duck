@@ -71,11 +71,12 @@ func run(addr, cfgPath string) error {
 		return fmt.Errorf("config %s: %w", cfgPath, err)
 	}
 	docker := dockercli.New()
+	home, _ := os.UserHomeDir()
 
 	srv := &http.Server{
 		Addr: addr,
 		Handler: api.New(api.Deps{
-			Info:     api.Info{Version: version},
+			Info:     api.Info{Version: version, Home: home},
 			UI:       webui.Handler(),
 			Store:    store,
 			Contexts: &contexts.Service{Docker: docker, Store: store},

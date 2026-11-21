@@ -17,6 +17,7 @@ import (
 // Info is static build/runtime metadata exposed by /api/v1/health.
 type Info struct {
 	Version string
+	Home    string // user's home dir, lets the UI shorten paths to ~/…
 }
 
 // Deps are the services the API exposes. Nil services leave their routes unregistered.
@@ -36,7 +37,7 @@ func New(d Deps) http.Handler {
 	mux := http.NewServeMux()
 	registerDocker(mux, d)
 	mux.HandleFunc("GET /api/v1/health", func(w http.ResponseWriter, r *http.Request) {
-		WriteJSON(w, http.StatusOK, map[string]any{"ok": true, "version": info.Version})
+		WriteJSON(w, http.StatusOK, map[string]any{"ok": true, "version": info.Version, "home": info.Home})
 	})
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, http.StatusNotFound, "not_found", "unknown API endpoint")

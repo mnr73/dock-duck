@@ -3,13 +3,78 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@theme inline {
+    --font-sans: "Geist Variable", system-ui, sans-serif;
+    --font-mono: "Geist Mono Variable", ui-monospace, monospace;
+
+    --color-app: var(--dd-app);
+    --color-sidebar: var(--dd-sidebar);
+    --color-rail: var(--dd-rail);
+    --color-surface: var(--dd-surface);
+    --color-raised: var(--dd-raised);
+    --color-hover: var(--dd-hover);
+    --color-line: var(--dd-line);
+    --color-line-strong: var(--dd-line-strong);
+    --color-fg: var(--dd-fg);
+    --color-muted: var(--dd-muted);
+    --color-dim: var(--dd-dim);
+    --color-ok: var(--dd-ok);
+    --color-ok-fg: var(--dd-ok-fg);
+    --color-warn: var(--dd-warn);
+    --color-warn-fg: var(--dd-warn-fg);
+    --color-err: var(--dd-err);
+    --color-err-fg: var(--dd-err-fg);
+    --color-info: var(--dd-info);
+    --color-info-fg: var(--dd-info-fg);
+    --color-danger-bg: var(--dd-danger-bg);
+    --color-danger-line: var(--dd-danger-line);
+    --color-accent: var(--dd-accent);
+    --color-accent-fg: var(--dd-accent-fg);
+    --color-accent-soft: var(--dd-accent-soft);
+    --color-accent-text: var(--dd-accent-text);
+    --color-overlay: var(--dd-overlay);
+    --color-term: var(--dd-term-bg);
+    --color-term-fg: var(--dd-term-fg);
+    --color-term-line: var(--dd-term-line);
+
+    --shadow-pop: var(--dd-shadow);
+}
+
 html,
 body,
 #app {
     height: 100%;
 }
+
 body {
-    background: var(--dd-bg);
+    margin: 0;
+    background: var(--dd-app);
     color: var(--dd-fg);
-    font-family: system-ui, sans-serif;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
+}
+
+button:not(:disabled),
+[role="button"] {
+    cursor: pointer;
+}
+
+:focus-visible {
+    outline: 2px solid var(--dd-accent);
+    outline-offset: 1px;
+}
+
+/* thin scrollbars, quiet by default */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--dd-line-strong) transparent;
 }

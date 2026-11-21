@@ -1,15 +1,73 @@
-/* Design tokens. Placeholder values; real palette is extracted from doc/design/DockDuck.html in Phase 3. */
+/*
+ * Design tokens, extracted from doc/design/DockDuck.html (dark = the mockup's
+ * palette, light = derived from it). Components never hard-code colours: they
+ * use the Tailwind names mapped in main.css (bg-app, text-muted, border-line…).
+ */
 :root {
-    --dd-bg: #fafafa;
-    --dd-fg: #18181b;
-    --dd-muted: #71717a;
-    --dd-border: #e4e4e7;
-    --dd-accent: #ca8a04;
+    color-scheme: light;
+    --dd-app: #fafaf8;
+    --dd-sidebar: #f3f3f0;
+    --dd-rail: #ecece8;
+    --dd-surface: #ffffff;
+    --dd-raised: #efefeb;
+    --dd-hover: #e7e7e2;
+    --dd-line: #e3e3de;
+    --dd-line-strong: #d0d0c9;
+    --dd-fg: #171717;
+    --dd-muted: #52524d;
+    --dd-dim: #6f6f69;
+    --dd-ok: #1f9d4c;
+    --dd-ok-fg: #17803d;
+    --dd-warn: #d18a0c;
+    --dd-warn-fg: #8f5b00;
+    --dd-err: #dc3b3b;
+    --dd-err-fg: #b42323;
+    --dd-info: #0e80b3;
+    --dd-info-fg: #0b6a96;
+    --dd-danger-bg: #fef2f2;
+    --dd-danger-line: #f1bcbc;
+    --dd-accent: #e0a526;
+    --dd-accent-fg: #171717;
+    --dd-accent-soft: #fbf0d6;
+    --dd-accent-text: #8f5b00;
+    --dd-overlay: rgb(20 20 20 / 0.35);
+    --dd-shadow: 0 10px 32px rgb(0 0 0 / 0.14);
 }
+
 .dark {
-    --dd-bg: #0b0b0d;
-    --dd-fg: #fafafa;
-    --dd-muted: #a1a1aa;
-    --dd-border: #27272a;
-    --dd-accent: #facc15;
+    color-scheme: dark;
+    --dd-app: #0a0a0a;
+    --dd-sidebar: #0d0d0d;
+    --dd-rail: #0a0a0a;
+    --dd-surface: #111111;
+    --dd-raised: #1a1a1a;
+    --dd-hover: #1a1a1a;
+    --dd-line: #1f1f1f;
+    --dd-line-strong: #2a2a2a;
+    --dd-fg: #ededed;
+    --dd-muted: #a1a1a1;
+    --dd-dim: #8a8a8a;
+    --dd-ok: #45c46b;
+    --dd-ok-fg: #8fe0a6;
+    --dd-warn: #e5a13a;
+    --dd-warn-fg: #f2c672;
+    --dd-err: #f05252;
+    --dd-err-fg: #ff8f8f;
+    --dd-info: #5ec4f0;
+    --dd-info-fg: #7fb2ff;
+    --dd-danger-bg: #1a0e0e;
+    --dd-danger-line: #4a2020;
+    --dd-accent: #f2b94b;
+    --dd-accent-fg: #0a0a0a;
+    --dd-accent-soft: #1f1a10;
+    --dd-accent-text: #f2b94b;
+    --dd-overlay: rgb(0 0 0 / 0.6);
+    --dd-shadow: 0 10px 40px rgb(0 0 0 / 0.6);
+}
+
+/* Log and terminal surfaces stay dark in every theme. */
+:root {
+    --dd-term-bg: #050505;
+    --dd-term-fg: #d4d4d4;
+    --dd-term-line: #1f1f1f;
 }

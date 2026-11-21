@@ -1,16 +1,14 @@
 <script setup lang="ts">
-import { RouterView } from "vue-router";
+import Toaster from "@/components/ui/Toaster.vue";
 
-import { useColorMode } from "@vueuse/core";
+import AppShell from "@/features/layout/AppShell.vue";
 
-// "auto" follows the OS; the class "dark" is toggled on <html>.
-useColorMode({
-  selector: "html",
-  attribute: "class",
-  modes: { light: "light", dark: "dark" },
-});
+import { useTheme } from "@/composables/useTheme";
+
+useTheme(); // applies the saved/system theme class on <html>
 </script>
 
 <template>
-  <RouterView />
+  <AppShell />
+  <Toaster />
 </template>

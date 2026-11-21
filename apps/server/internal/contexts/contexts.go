@@ -74,7 +74,7 @@ func (s *Service) List(ctx context.Context) ([]Info, error) {
 			defer wg.Done()
 			ver, err := s.ping(ctx, r.Name)
 			if err != nil {
-				out[i].Error = firstLine(err.Error())
+				out[i].Error = friendlyError(err)
 				return
 			}
 			out[i].Available, out[i].Version, out[i].Error = true, ver, ""
@@ -170,7 +170,29 @@ func (s *Service) ping(ctx context.Context, name string) (string, error) {
 func firstLine(s string) string {
 	s = strings.TrimSpace(s)
 	if i := strings.IndexByte(s, '\n'); i >= 0 {
-		return s[:i]
+		s = s[:i]
 	}
 	return s
+}
+
+// friendlyError strips the "docker --context x version …:" prefix docker adds
+// and shortens the noisy daemon-connection errors to something a human can read.
+func friendlyError(err error) string {
+	var ee *dockercli.ExitError
+	msg := err.Error()
+	if errors.As(err, &ee) {
+		msg = strings.TrimSpace(ee.Stderr)
+		if msg == "" {
+			msg = ee.Err.Error()
+		}
+	}
+	msg = firstLine(msg)
+	if i := strings.Index(msg, "check if the path is correct"); i > 0 {
+		msg = strings.TrimRight(strings.TrimSpace(msg[:i]), ";:, ")
+	}
+	msg = strings.TrimPrefix(msg, "failed to connect to the docker API at ")
+	if strings.HasPrefix(msg, "unix://") || strings.HasPrefix(msg, "ssh://") || strings.HasPrefix(msg, "tcp://") {
+		msg = "cannot connect to " + msg
+	}
+	return msg
 }

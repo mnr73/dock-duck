@@ -48,11 +48,24 @@ Notes (as built):
 - E2E on real Docker with a throwaway project (`dockduck-test-a`): up/stop one service/start/down all succeeded, healthcheck state, exit-code-3 service shown as `error`, published port detected, IPv6 duplicate port collapsed, events stream saw create/start/die/health_status/stop/destroy, job WS streamed output then `done`.
 
 ## Phase 3 — UI shell + design system (2 d)
-- [ ] Tokens (dark/light) from mockup; fonts (Geist / mono); theme via VueUse `useColorMode`; generic components (ideas from shiva-connect): Btn, IconBtn, Menu, Dialog/Confirm, Toast, Tabs, Table, Tooltip, Badge/StatusDot, Select, Input
-- [ ] Layout: collapsible sidebar, status bar, project header (boards 11, 12, 13)
-- [ ] Context selector popover (board 06), project list with status + expandable services
-- [ ] Roots dialog (board 07), rescan, empty/loading/disconnected states
+- [x] Tokens (dark/light) from mockup; fonts (Geist / mono); theme via VueUse `useColorMode`; generic components (ideas from shiva-connect): Btn, IconBtn, Menu, Dialog, Toast (vue-sonner), Tabs, Tooltip, Badge/StatusDot, Alert, EmptyState, SegmentedControl, Popover
+- [x] Layout: collapsible sidebar, status bar, project header (boards 11, 12, 13)
+- [x] Context selector page (board 06) + status-bar chip, project list with status + expandable services (project → service → container)
+- [x] Roots page (board 07) with add/remove(confirm)/rescan, empty/loading/disconnected states
 - **Done when:** UI lists contexts and projects live.
+
+Notes (as built):
+- Dark tokens are extracted from the mockup (`#0A0A0A` app, `#0D0D0D` sidebar, `#1F1F1F` lines, accent `#F2B94B`, green/amber/red/blue status colours); the mockup is dark-only, so the **light palette is derived** (`styles/tokens.css`). Tailwind names (`bg-app`, `text-muted`, `border-line`, `text-ok-fg`…) map to the tokens in `main.css`; components never hard-code colours. Log/terminal surfaces use `--dd-term-*` (always dark).
+- Fonts: Geist + Geist Mono via `@fontsource-variable` (bundled, works offline).
+- Deviation from the mockup: the **"+ New context" button is intentionally absent** (contexts are list/switch only). Contexts and Roots are pages reached from the rail, not popovers; the status-bar chip links to Contexts.
+- Added beyond the board list: `/ports` and `/registries` rail entries (placeholder pages until Phases 4/8), `Outside your roots` group in the tree for projects Docker knows but no root contains, path hint for duplicate project names (two `megabin`s).
+- Backend additions: `/health` returns the user's `home` (UI shortens `~`), and the WS/HTTP context can be chosen with `?context=` (browsers can't set headers on WebSockets).
+- Live updates: `useLiveEvents` (VueUse `useWebSocket`, infinite reconnect) refreshes the project list and loaded details on container events, debounced 400 ms; reopened on context switch.
+- State: Pinia stores `system`, `contexts`, `projects`, `ui` (sidebar/tree expansion persisted with `useStorage`). Theme: `useColorMode` (System/Light/Dark) in Settings.
+- Header actions Up/Start/Stop/Restart already call the Phase 2 API (toast on start); **Down… is disabled** until the confirmation dialog lands in Phase 4. Overview and Services tabs show the same basic table for now; Compose/Env/Logs/Terminal are placeholders.
+- Verified in a real browser against the embedded binary: dark + light themes, tree expansion (also restored after reload), context list/selected state, roots add (relative path → server error shown)/remove dialog (Cancel, ✕, Esc, backdrop all close), project page with live data from erp-back.
+- Docker-unreachable state verified with `DOCKER_HOST` pointing at a dead socket: red banner ("Can’t reach the Docker daemon…" + Switch context / Retry), status-bar chip turns red, projects still listed; the daemon error text is shortened server-side (`friendlyError`).
+- Known polish left for later: services table columns/typography, per-row service actions, Down confirmation lands in Phase 4.
 
 ## Phase 4 — Services, ports, actions UI (1–2 d)
 - [ ] Services table (board 01) with row context menu, status indicators, health, usage

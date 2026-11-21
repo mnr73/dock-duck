@@ -15,6 +15,7 @@ export default {
         "<THIRD_PARTY_MODULES>",
         "^@/icons$",
         "^@/components/(.*)$",
+        "^@/features/(.*)$",
         "^@/(.*)$",
         "^[./]",
     ],

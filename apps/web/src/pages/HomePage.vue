@@ -1,20 +1,30 @@
 <script setup lang="ts">
-import { IconDocker } from "@/icons";
+import { IconFolderAdd, IconProjects } from "@/icons";
 
-import { type Health, useApi } from "@/api/client";
+import Btn from "@/components/ui/Btn.vue";
+import EmptyState from "@/components/ui/EmptyState.vue";
 
-const { data: health, error, isFetching } = useApi("/health").json<Health>();
+import { useProjectsStore } from "@/stores/projects";
+
+const projects = useProjectsStore();
 </script>
 
 <template>
-  <main class="flex h-full flex-col items-center justify-center gap-3">
-    <IconDocker class="size-10 text-(--dd-accent)" />
-    <h1 class="text-2xl font-semibold">DockDuck</h1>
-    <p class="text-sm text-(--dd-muted)">Your local stacks, under control.</p>
-    <p class="font-mono text-xs text-(--dd-muted)">
-      <template v-if="isFetching">connecting…</template>
-      <template v-else-if="error">server unreachable</template>
-      <template v-else>server {{ health?.version }} · ok</template>
-    </p>
-  </main>
+  <EmptyState
+    v-if="projects.loaded && !projects.roots.length"
+    title="Point DockDuck at your code"
+    text="Add a folder like ~/Code and every Compose project inside it shows up here."
+  >
+    <template #icon><IconFolderAdd class="size-5" /></template>
+    <RouterLink to="/roots"
+      ><Btn variant="primary">Add folder…</Btn></RouterLink
+    >
+  </EmptyState>
+  <EmptyState
+    v-else
+    title="Pick a project"
+    text="Choose a project in the sidebar to see its services."
+  >
+    <template #icon><IconProjects class="size-5" /></template>
+  </EmptyState>
 </template>

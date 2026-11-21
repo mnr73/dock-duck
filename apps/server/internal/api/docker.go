@@ -162,9 +162,15 @@ func (h *dockerHandlers) listProjects(w http.ResponseWriter, r *http.Request) {
 	WriteJSON(w, http.StatusOK, list)
 }
 
-// contextFor resolves the docker context: X-Docker-Context header, else the app's selection.
+// contextFor resolves the docker context: X-Docker-Context header, else the
+// `context` query parameter (browsers cannot set headers on WebSockets), else
+// the app's saved selection.
 func (h *dockerHandlers) contextFor(r *http.Request) (string, error) {
-	if n := r.Header.Get("X-Docker-Context"); n != "" {
+	n := r.Header.Get("X-Docker-Context")
+	if n == "" {
+		n = r.URL.Query().Get("context")
+	}
+	if n != "" {
 		if !dockercli.ValidName(n) {
 			return "", errors.New("invalid X-Docker-Context")
 		}
