@@ -30,11 +30,22 @@ Notes (as built):
 - Endpoints live now: `GET /contexts`, `PUT /contexts/selected`, `GET|POST /roots`, `DELETE /roots/{id}`, `POST /roots/rescan`, `GET /projects`.
 
 ## Phase 2 — Project state + actions (2 d)
-- [ ] Project/service state from `ps -a` (status, health, image, ports, container names)
-- [ ] Actions: up, down (opt. `-v`, `--remove-orphans`), start, stop, restart, build, pull — project and per service
-- [ ] Jobs with streamed output; `events` watcher pushing updates
-- [ ] Resource usage (`docker stats --no-stream`, throttled)
+- [x] Project/service state from `ps -a` (status, health, image, ports, container names)
+- [x] Actions: up, down (opt. `-v`, `--remove-orphans`), start, stop, restart, build, pull — project and per service
+- [x] Jobs with streamed output; `events` watcher pushing updates
+- [x] Resource usage (`docker stats --no-stream`, throttled)
 - **Done when:** can up/down a real project from curl + watch events.
+
+Notes (as built):
+- Service status folds container states: restarting > unhealthy > starting > running > paused > error (exited non-zero) > exited > stopped. Declared-but-never-created services show `stopped`; containers of removed services still appear.
+- State = `compose config --format json` (declared) merged with `compose ps -a --format json` (existing). If `config` fails (e.g. missing env var), `config_error` is returned and services come from containers only.
+- Commands pass `--project-directory`, every `-f` file, and `-p <name>` only when Docker already knows the project (so `name:`/COMPOSE_PROJECT_NAME keep working otherwise).
+- One running job per project (409 `busy`); other projects are independent. Job output is kept in memory (5000 lines, last 50 jobs).
+- `down -v` is only built when `volumes:true` is sent explicitly; the UI must confirm it (Phase 4). `down` rejects a service list; service names are validated.
+- Events: one `docker events` process per context while ≥1 WebSocket listens; killed with the last listener; auto-restart with backoff.
+- Stats: `docker stats --no-stream`, cached 3 s per project, running containers only.
+- WebSockets (coder/websocket) accept only same-origin (plus the Vite dev origin from loopback); a foreign Origin gets 403 (tested).
+- E2E on real Docker with a throwaway project (`dockduck-test-a`): up/stop one service/start/down all succeeded, healthcheck state, exit-code-3 service shown as `error`, published port detected, IPv6 duplicate port collapsed, events stream saw create/start/die/health_status/stop/destroy, job WS streamed output then `done`.
 
 ## Phase 3 — UI shell + design system (2 d)
 - [ ] Tokens (dark/light) from mockup; fonts (Geist / mono); theme via VueUse `useColorMode`; generic components (ideas from shiva-connect): Btn, IconBtn, Menu, Dialog/Confirm, Toast, Tabs, Table, Tooltip, Badge/StatusDot, Select, Input

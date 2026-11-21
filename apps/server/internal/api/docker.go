@@ -29,6 +29,17 @@ func registerDocker(mux *http.ServeMux, d Deps) {
 	mux.HandleFunc("POST /api/v1/roots/rescan", h.rescan)
 
 	mux.HandleFunc("GET /api/v1/projects", h.listProjects)
+	if d.Jobs != nil {
+		mux.HandleFunc("GET /api/v1/projects/{id}", h.projectDetail)
+		mux.HandleFunc("GET /api/v1/projects/{id}/stats", h.projectStats)
+		mux.HandleFunc("POST /api/v1/projects/{id}/actions/{action}", h.projectAction)
+		mux.HandleFunc("GET /api/v1/jobs", h.listJobs)
+		mux.HandleFunc("GET /api/v1/jobs/{id}", h.getJob)
+		mux.HandleFunc("GET /ws/v1/jobs/{id}", h.jobStream)
+	}
+	if d.Events != nil {
+		mux.HandleFunc("GET /ws/v1/events", h.eventStream)
+	}
 }
 
 type dockerHandlers struct{ Deps }

@@ -27,6 +27,11 @@ type Project struct {
 	Status  string   `json:"status"`         // running | partial | stopped | unknown
 	Running int      `json:"running"`
 	Total   int      `json:"total"`
+
+	// DockerName is true when Name came from Docker (the project exists there),
+	// in which case commands pass -p; otherwise Compose derives the name itself
+	// (honouring `name:` and COMPOSE_PROJECT_NAME).
+	DockerName bool `json:"-"`
 }
 
 // Service lists projects. Scan results are cached until Rescan.
@@ -37,6 +42,7 @@ type Service struct {
 	mu     sync.Mutex
 	scan   []discovery.Found
 	loaded bool
+	stats  statsCache
 }
 
 type lsEntry struct {
@@ -101,7 +107,7 @@ func (s *Service) List(ctx context.Context, ctxName string) ([]Project, error) {
 			Root: f.Root, Name: DefaultName(f.Dir), Status: "unknown"}
 		if e, ok := byDir[f.Dir]; ok {
 			used[f.Dir] = true
-			p.Name = e.Name
+			p.Name, p.DockerName = e.Name, true
 			p.Files = splitFiles(e.ConfigFiles)
 			p.Running, p.Total, p.Status = parseStatus(e.Status)
 		} else if ls != nil {
@@ -113,7 +119,7 @@ func (s *Service) List(ctx context.Context, ctxName string) ([]Project, error) {
 		if used[dir] {
 			continue
 		}
-		p := Project{ID: config.RootID(dir), Name: e.Name, Dir: dir, Files: splitFiles(e.ConfigFiles)}
+		p := Project{ID: config.RootID(dir), Name: e.Name, Dir: dir, Files: splitFiles(e.ConfigFiles), DockerName: true}
 		p.Running, p.Total, p.Status = parseStatus(e.Status)
 		if f, ok := discovery.InspectDir(dir); ok {
 			p.EnvFile = f.EnvFile
@@ -163,4 +169,18 @@ func splitFiles(s string) []string {
 		}
 	}
 	return out
+}
+
+// Find returns one project by id (as listed for ctxName).
+func (s *Service) Find(ctx context.Context, ctxName, id string) (Project, bool, error) {
+	list, err := s.List(ctx, ctxName)
+	if err != nil {
+		return Project{}, false, err
+	}
+	for _, p := range list {
+		if p.ID == id {
+			return p, true, nil
+		}
+	}
+	return Project{}, false, nil
 }
