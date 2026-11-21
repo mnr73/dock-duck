@@ -304,7 +304,8 @@ func ActionArgs(ctxName string, p Project, action string, o ActionOpts) ([]strin
 // Usage is the resource usage of one container.
 type Usage struct {
 	CPUPercent float64 `json:"cpu_percent"`
-	MemUsage   string  `json:"mem_usage"`
+	MemUsage   string  `json:"mem_usage"` // "464.7MiB / 30.81GiB"
+	MemBytes   int64   `json:"mem_bytes"` // used memory, for summing per service
 	MemPercent float64 `json:"mem_percent"`
 }
 
@@ -356,7 +357,8 @@ func (s *Service) Stats(ctx context.Context, ctxName string, p Project, containe
 			return nil, err
 		}
 		for _, r := range rows {
-			out[r.ID] = Usage{CPUPercent: pct(r.CPUPerc), MemUsage: r.MemUsage, MemPercent: pct(r.MemPerc)}
+			used, _, _ := strings.Cut(r.MemUsage, "/")
+			out[r.ID] = Usage{CPUPercent: pct(r.CPUPerc), MemUsage: r.MemUsage, MemBytes: parseSize(used), MemPercent: pct(r.MemPerc)}
 		}
 	}
 	s.stats.mu.Lock()
@@ -402,4 +404,24 @@ func lastLines(s string, n int) string {
 		lines = lines[len(lines)-n:]
 	}
 	return strings.Join(lines, "\n")
+}
+
+var sizeUnits = map[string]float64{
+	"b": 1, "kb": 1e3, "mb": 1e6, "gb": 1e9, "tb": 1e12,
+	"kib": 1 << 10, "mib": 1 << 20, "gib": 1 << 30, "tib": 1 << 40,
+}
+
+// parseSize converts docker's "464.7MiB" / "12kB" strings to bytes (0 if unknown).
+func parseSize(s string) int64 {
+	s = strings.ToLower(strings.TrimSpace(s))
+	i := 0
+	for i < len(s) && (s[i] >= '0' && s[i] <= '9' || s[i] == '.') {
+		i++
+	}
+	n, err := strconv.ParseFloat(s[:i], 64)
+	mult, ok := sizeUnits[strings.TrimSpace(s[i:])]
+	if err != nil || !ok {
+		return 0
+	}
+	return int64(n * mult)
 }

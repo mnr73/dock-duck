@@ -213,3 +213,69 @@ func sameOriginPatterns(r *http.Request) []string {
 	}
 	return pats
 }
+
+func (h *dockerHandlers) downPreview(w http.ResponseWriter, r *http.Request) {
+	ctxName, p, ok := h.project(w, r)
+	if !ok {
+		return
+	}
+	d, err := h.Projects.Detail(r.Context(), ctxName, p)
+	if err != nil {
+		WriteError(w, http.StatusBadGateway, "docker_error", err.Error())
+		return
+	}
+	pv, err := h.Projects.DownPreview(r.Context(), ctxName, d)
+	if err != nil {
+		WriteError(w, http.StatusBadGateway, "docker_error", err.Error())
+		return
+	}
+	WriteJSON(w, http.StatusOK, pv)
+}
+
+// inspectService returns trimmed `docker inspect` data of every container of a service.
+func (h *dockerHandlers) inspectService(w http.ResponseWriter, r *http.Request) {
+	ctxName, p, ok := h.project(w, r)
+	if !ok {
+		return
+	}
+	d, err := h.Projects.Detail(r.Context(), ctxName, p)
+	if err != nil {
+		WriteError(w, http.StatusBadGateway, "docker_error", err.Error())
+		return
+	}
+	var ids []string
+	found := false
+	for _, s := range d.Services {
+		if s.Name != r.PathValue("service") {
+			continue
+		}
+		found = true
+		for _, c := range s.Containers {
+			ids = append(ids, c.ID)
+		}
+	}
+	if !found {
+		WriteError(w, http.StatusNotFound, "service_not_found", "unknown service")
+		return
+	}
+	out, err := h.Projects.InspectContainers(r.Context(), ctxName, ids)
+	if err != nil {
+		WriteError(w, http.StatusBadGateway, "docker_error", err.Error())
+		return
+	}
+	WriteJSON(w, http.StatusOK, out)
+}
+
+func (h *dockerHandlers) listPorts(w http.ResponseWriter, r *http.Request) {
+	ctxName, err := h.contextFor(r)
+	if err != nil {
+		WriteError(w, http.StatusBadGateway, "docker_unavailable", err.Error())
+		return
+	}
+	list, err := h.Ports.List(r.Context(), ctxName)
+	if err != nil {
+		WriteError(w, http.StatusBadGateway, "docker_error", err.Error())
+		return
+	}
+	WriteJSON(w, http.StatusOK, list)
+}

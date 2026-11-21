@@ -138,3 +138,70 @@ func TestStatsCache(t *testing.T) {
 		t.Error("non-hex id must be rejected")
 	}
 }
+
+func TestParseSize(t *testing.T) {
+	for in, want := range map[string]int64{"464.7MiB": 487273267, "1GiB": 1 << 30, "12kB": 12000, "0B": 0, "10.67MiB ": 11188305, "x": 0, "": 0} {
+		if got := parseSize(in); got != want {
+			t.Errorf("parseSize(%q) = %d, want %d", in, got, want)
+		}
+	}
+}
+
+func TestDownPreview(t *testing.T) {
+	r := dockercli.RunnerFunc(func(_ context.Context, a ...string) ([]byte, error) {
+		j := strings.Join(a, " ")
+		switch {
+		case strings.HasPrefix(j, "network ls"):
+			return []byte(`{"Name":"erp_default"}`), nil
+		case strings.HasPrefix(j, "volume ls"):
+			return []byte("{\"Name\":\"erp_mysql\"}\n{\"Name\":\"erp_redis\"}"), nil
+		}
+		return nil, errors.New("unexpected " + j)
+	})
+	d := Detail{Project: Project{Name: "erp"}, Services: []ComposeService{{Containers: []Container{{Name: "erp-app-1"}, {Name: "erp-db-1"}}}}}
+	pv, err := (&Service{Docker: r}).DownPreview(context.Background(), "", d)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(pv.Containers) != 2 || len(pv.Networks) != 1 || len(pv.Volumes) != 2 || pv.Volumes[0] != "erp_mysql" {
+		t.Errorf("%+v", pv)
+	}
+	// unsafe project names never reach docker
+	bad := Detail{Project: Project{Name: "--all"}}
+	pv, err = (&Service{Docker: dockercli.RunnerFunc(func(context.Context, ...string) ([]byte, error) { t.Fatal("must not run docker"); return nil, nil })}).DownPreview(context.Background(), "", bad)
+	if err != nil || len(pv.Volumes) != 0 {
+		t.Errorf("%v %+v", err, pv)
+	}
+}
+
+const inspectDetail = `[{"Id":"aaaaaaaaaaaa1111ffff","Name":"/erp-app-1","Created":"2026-11-01T10:00:00Z","Path":"docker-php-entrypoint","Args":["php-fpm"],
+ "Config":{"Image":"larado","Entrypoint":["docker-php-entrypoint"],"WorkingDir":"/var/www","User":"1000","Env":["DB_PASSWORD=secret"]},
+ "State":{"Status":"running","ExitCode":0,"StartedAt":"2026-11-21T08:00:00Z","FinishedAt":"0001-01-01T00:00:00Z","Health":{"Status":"healthy","Log":[{"Output":"ok\n"}]}},
+ "RestartCount":2,"HostConfig":{"RestartPolicy":{"Name":""},"Privileged":false},
+ "Mounts":[{"Type":"bind","Source":"/h/app","Destination":"/var/www","RW":true},{"Type":"volume","Name":"erp_data","Source":"/v","Destination":"/data","RW":false}],
+ "NetworkSettings":{"Networks":{"erp_default":{"IPAddress":"172.18.0.2","Aliases":["app"]}},"Ports":{"80/tcp":[{"HostIp":"0.0.0.0","HostPort":"8080"},{"HostIp":"::","HostPort":"8080"}],"9000/tcp":null}}}]`
+
+func TestInspectContainers(t *testing.T) {
+	r := dockercli.RunnerFunc(func(_ context.Context, a ...string) ([]byte, error) { return []byte(inspectDetail), nil })
+	got, err := (&Service{Docker: r}).InspectContainers(context.Background(), "", []string{"aaaaaaaaaaaa"})
+	if err != nil || len(got) != 1 {
+		t.Fatalf("%v %v", got, err)
+	}
+	c := got[0]
+	if c.ID != "aaaaaaaaaaaa" || c.Name != "erp-app-1" || c.Command != "docker-php-entrypoint php-fpm" || c.RestartPolicy != "no" || c.RestartCount != 2 {
+		t.Errorf("%+v", c)
+	}
+	if c.FinishedAt != "" || c.StartedAt == "" || c.Health != "healthy" || c.HealthOutput != "ok" || c.User != "1000" {
+		t.Errorf("state: %+v", c)
+	}
+	if len(c.Mounts) != 2 || c.Mounts[1].Name != "erp_data" || c.Mounts[1].RW || len(c.Ports) != 1 || c.Ports[0].HostPort != 8080 {
+		t.Errorf("mounts/ports: %+v %+v", c.Mounts, c.Ports)
+	}
+	b, _ := json.Marshal(c)
+	if strings.Contains(string(b), "secret") || strings.Contains(string(b), "DB_PASSWORD") {
+		t.Error("environment variables must never be exposed")
+	}
+	if _, err := (&Service{Docker: r}).InspectContainers(context.Background(), "", []string{"--format"}); err == nil {
+		t.Error("non-hex id must be rejected")
+	}
+}

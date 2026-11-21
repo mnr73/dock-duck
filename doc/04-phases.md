@@ -68,10 +68,20 @@ Notes (as built):
 - Known polish left for later: services table columns/typography, per-row service actions, Down confirmation lands in Phase 4.
 
 ## Phase 4 — Services, ports, actions UI (1–2 d)
-- [ ] Services table (board 01) with row context menu, status indicators, health, usage
-- [ ] Project actions with confirmations (down, down -v), toasts, job output drawer
-- [ ] Global **Ports** view: all published ports, filter, conflict detection, open link
-- [ ] Inspect drawer for a service/container
+- [x] Services table (board 01) with row context menu, status indicators, health, usage
+- [x] Project actions with confirmations (down, down -v), toasts, job output drawer
+- [x] Global **Ports** view: all published ports, filter, conflict detection, open link
+- [x] Inspect drawer for a service/container
+
+Notes (as built):
+- Backend: `GET /ports` (all published ports of running containers; IPv4+IPv6 merged into `host_ips`, unpublished entries dropped, sorted by host port), `GET /projects/{id}/services/{service}` (trimmed `docker inspect`; **environment variables are deliberately never returned**), `GET /projects/{id}/down-preview` (containers, project-labelled networks and volumes that `down`/`down -v` would remove), and per-container `mem_bytes` in stats so the UI can sum per service. `docker inspect` ids are validated as hex.
+- Services table: state with health badge, image, ports as `host→container` links (open `http://localhost:<port>`, `https` for 443/8443), CPU/memory per service (polled every 5 s with VueUse `useIntervalFn`, only while something runs), spinner on rows with an action in flight, row menu (Start/Stop/Restart/View logs/Execute command/Inspect; entries disable by state). `?service=` highlights a row (sidebar links use it). Overview and Services tabs share the page; Logs/Execute menu entries navigate to the Phase 5/7 routes with `?service=`.
+- Down dialog: previews what is removed; "remove volumes" is only enabled when the project has named volumes, lists them, and requires typing the project name; separate orphan toggle. The header Down… button is enabled only when the project has containers and no job is running.
+- Jobs: `stores/jobs` posts the action, follows `/ws/v1/jobs/{id}`, shows a bottom drawer with the live output (copy button, always-dark surface), toasts success ("<project> was taken down") or failure (last error-looking line + "Show output"), and reconnects/asks `/jobs/{id}` if the socket drops. A floating pill reopens the last output.
+- Ports page: filter box, "reachable from the network only" toggle (persisted with `useStorage`), `duplicate` badge when one host port/protocol appears twice, project links, open-in-browser; refreshes on live container events and on context change.
+- Verified end to end in a real browser on a throwaway project (`dockduck-test-a`): up with live CPU/mem, row Stop (only that container stopped, checked with `docker ps`), inspect drawer, Down dialog gates, **real `down -v` removed container+network+volume (checked in Docker)**, and a real failure (`Bind for 0.0.0.0:3306 failed: port is already allocated`) produced the error toast with the daemon message. The user's running erp-back containers were never touched.
+- Pitfall hit twice: running `prettier --write` between scripted edits reflows lines so a later `str.replace` silently misses. Re-read the file or use the patch tool, then grep to confirm the change landed.
+- Still open: log/exec targets of the row menu (Phases 5/7), `Pull`/`Build` buttons, Services tab is identical to Overview.
 
 ## Phase 5 — Logs (1–2 d)
 - [ ] WS streaming, service filter, timestamps, search/highlight, pause/resume, clear, autoscroll, copy, download

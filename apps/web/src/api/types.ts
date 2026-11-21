@@ -92,3 +92,73 @@ export interface ContainerEvent {
     id: string;
     time: number;
 }
+
+export interface Usage {
+    cpu_percent: number;
+    mem_usage: string;
+    mem_bytes: number;
+    mem_percent: number;
+}
+
+export type JobStatus = "running" | "succeeded" | "failed";
+
+export interface JobInfo {
+    id: string;
+    project: string;
+    action: string;
+    services?: string[];
+    status: JobStatus;
+    error?: string;
+    started_at: string;
+    ended_at?: string;
+}
+
+export interface DownPreview {
+    project: string;
+    containers: string[];
+    networks: string[];
+    volumes: string[];
+}
+
+export interface PortEntry {
+    host_ips: string[];
+    host_port: number;
+    container_port: number;
+    proto: string;
+    project?: string;
+    service?: string;
+    container: string;
+    container_id: string;
+    image: string;
+}
+
+export interface ContainerDetail {
+    id: string;
+    name: string;
+    image: string;
+    created: string;
+    command: string;
+    entrypoint?: string;
+    working_dir?: string;
+    user?: string;
+    state: string;
+    exit_code: number;
+    error?: string;
+    oom_killed: boolean;
+    started_at?: string;
+    finished_at?: string;
+    restart_count: number;
+    restart_policy: string;
+    privileged: boolean;
+    health?: string;
+    health_output?: string;
+    mounts: {
+        type: string;
+        name?: string;
+        source: string;
+        destination: string;
+        rw: boolean;
+    }[];
+    networks: { name: string; ip: string; aliases?: string[] }[];
+    ports: Port[];
+}

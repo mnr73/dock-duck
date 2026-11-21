@@ -32,6 +32,10 @@ export { default as IconMore } from "~icons/lucide/ellipsis";
 export { default as IconSearch } from "~icons/lucide/search";
 export { default as IconExternal } from "~icons/lucide/external-link";
 
+export { default as IconCopy } from "~icons/lucide/copy";
+export { default as IconInspect } from "~icons/lucide/scan-search";
+export { default as IconPause } from "~icons/lucide/pause";
+
 /* ------------------------------- Navigation ------------------------------- */
 export { default as IconChevronRight } from "~icons/lucide/chevron-right";
 export { default as IconChevronDown } from "~icons/lucide/chevron-down";

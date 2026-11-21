@@ -11,6 +11,7 @@ import (
 	"dockduck/internal/contexts"
 	"dockduck/internal/events"
 	"dockduck/internal/jobs"
+	"dockduck/internal/ports"
 	"dockduck/internal/projects"
 )
 
@@ -29,6 +30,7 @@ type Deps struct {
 	Projects *projects.Service
 	Jobs     *jobs.Manager
 	Events   *events.Hub
+	Ports    *ports.Service
 }
 
 // New returns the root handler: /api/v1/* is the API, everything else goes to UI.

@@ -20,6 +20,7 @@ import (
 	"dockduck/internal/dockercli"
 	"dockduck/internal/events"
 	"dockduck/internal/jobs"
+	"dockduck/internal/ports"
 	"dockduck/internal/projects"
 	"dockduck/internal/webui"
 )
@@ -83,6 +84,7 @@ func run(addr, cfgPath string) error {
 			Projects: &projects.Service{Docker: docker, Store: store},
 			Jobs:     jobs.New(docker),
 			Events:   events.New(docker),
+			Ports:    &ports.Service{Docker: docker},
 		}),
 		ReadHeaderTimeout: 10 * time.Second,
 	}

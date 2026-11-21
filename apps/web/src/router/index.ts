@@ -15,12 +15,12 @@ export const router = createRouter({
                 {
                     path: "",
                     name: "project",
-                    component: () => import("@/pages/ProjectOverviewPage.vue"),
+                    component: () => import("@/pages/ProjectServicesPage.vue"),
                 },
                 {
                     path: "services",
                     name: "project-services",
-                    component: () => import("@/pages/ProjectOverviewPage.vue"),
+                    component: () => import("@/pages/ProjectServicesPage.vue"),
                 },
                 {
                     path: "compose",
@@ -56,8 +56,8 @@ export const router = createRouter({
         },
         {
             path: "/ports",
-            component: () => import("@/pages/ComingSoonPage.vue"),
-            props: { title: "Ports", phase: "Phase 4" },
+            name: "ports",
+            component: () => import("@/pages/PortsPage.vue"),
         },
         {
             path: "/registries",
