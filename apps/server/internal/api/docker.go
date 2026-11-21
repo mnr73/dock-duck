@@ -50,6 +50,14 @@ func registerDocker(mux *http.ServeMux, d Deps) {
 		mux.HandleFunc("POST /api/v1/projects/{id}/files/{fid}/validate", h.validateFile)
 		mux.HandleFunc("GET /api/v1/projects/{id}/env", h.readEnv)
 	}
+	if d.Terminals != nil && d.Runner != nil {
+		mux.HandleFunc("POST /api/v1/projects/{id}/terminals", h.openTerminal)
+		mux.HandleFunc("POST /api/v1/projects/{id}/terminals/system", h.openSystemTerminal)
+		mux.HandleFunc("GET /api/v1/terminals/system", h.systemTerminalInfo)
+		mux.HandleFunc("GET /api/v1/terminals", h.listTerminals)
+		mux.HandleFunc("DELETE /api/v1/terminals/{id}", h.closeTerminal)
+		mux.HandleFunc("GET /ws/v1/terminals/{id}", h.terminalStream)
+	}
 	if d.Ports != nil {
 		mux.HandleFunc("GET /api/v1/ports", h.listPorts)
 	}

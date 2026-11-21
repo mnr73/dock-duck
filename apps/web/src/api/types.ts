@@ -215,3 +215,38 @@ export interface EnvView {
     } | null;
     usage: { services: string[]; interpolated: string[] };
 }
+
+export interface TerminalInfo {
+    id: string;
+    project: string;
+    project_name: string;
+    service: string;
+    container: string;
+    user: string;
+    shell: string;
+    command: string;
+    display: string;
+    cols: number;
+    rows: number;
+    started: string;
+    state: "running" | "exited";
+    exit_code?: number;
+    attached: boolean;
+}
+
+export interface TerminalOpenRequest {
+    service: string;
+    container?: string;
+    user?: string;
+    shell?: string;
+    command?: string;
+    workdir?: string;
+    cols?: number;
+    rows?: number;
+}
+
+export interface SystemTerminalStatus {
+    available: boolean;
+    name?: string;
+    reason?: string;
+}

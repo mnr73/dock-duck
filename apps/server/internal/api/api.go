@@ -15,6 +15,7 @@ import (
 	"dockduck/internal/jobs"
 	"dockduck/internal/ports"
 	"dockduck/internal/projects"
+	"dockduck/internal/terminal"
 )
 
 // Info is static build/runtime metadata exposed by /api/v1/health.
@@ -25,16 +26,21 @@ type Info struct {
 
 // Deps are the services the API exposes. Nil services leave their routes unregistered.
 type Deps struct {
-	Info     Info
-	UI       http.Handler
-	Store    *config.Store
-	Contexts *contexts.Service
-	Projects *projects.Service
-	Jobs     *jobs.Manager
-	Events   *events.Hub
-	Ports    *ports.Service
-	Streamer dockercli.Streamer // long-running docker commands (logs)
-	Stdin    files.StdinRunner  // compose validation of unsaved content
+	Info      Info
+	UI        http.Handler
+	Store     *config.Store
+	Contexts  *contexts.Service
+	Projects  *projects.Service
+	Jobs      *jobs.Manager
+	Events    *events.Hub
+	Ports     *ports.Service
+	Streamer  dockercli.Streamer // long-running docker commands (logs)
+	Stdin     files.StdinRunner  // compose validation of unsaved content
+	Runner    dockercli.Runner   // one-shot docker commands (terminal cleanup)
+	Terminals *terminal.Manager  // interactive exec sessions
+	DockerBin string             // docker binary for exec sessions (default "docker")
+	// SystemTerminal overrides native-terminal detection (tests).
+	SystemTerminal func() *terminal.SystemTerminal
 }
 
 // New returns the root handler: /api/v1/* is the API, everything else goes to UI.
@@ -54,7 +60,7 @@ func New(d Deps) http.Handler {
 	mux.HandleFunc("/api/", notFound)
 	mux.HandleFunc("/ws/", notFound)
 	mux.Handle("/", ui)
-	return logRequests(mux)
+	return logRequests(guardBrowser(mux))
 }
 
 // WriteJSON writes v as JSON.

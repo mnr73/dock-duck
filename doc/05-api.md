@@ -66,3 +66,14 @@ Context selection: header `X-Docker-Context: <name>` or query `?context=<name>` 
 | PUT | `/projects/{id}/files/{fid}` | body `{content}`, header `If-Match: <etag>` (empty = create a missing `.env`). 409 `conflict`, 413, 422 `not_text`, 400 `masked_value` |
 | POST | `/projects/{id}/files/{fid}/validate` | body `{content}` -> `{ok,problems:[{severity,line?,message}]}`; Compose files only |
 | GET | `/projects/{id}/env` | structured view: `lines` (masked unless `?reveal=1`), `example` (missing keys), `usage` (`env_file` services, interpolated vars) |
+
+## Terminals (Phase 7)
+
+| Method | Path | Notes |
+|---|---|---|
+| POST | `/projects/{id}/terminals` | body `{service, container?, user?, shell?, command?, workdir?, cols?, rows?}` -> 201 session info. 409 `not_running`, 429 `too_many` |
+| GET | `/terminals` | all sessions |
+| DELETE | `/terminals/{id}` | kills the shell and sweeps what it left in the container |
+| GET | `/terminals/system` | `{available, name?, reason?}` native terminal |
+| POST | `/projects/{id}/terminals/system` | same body; opens the system terminal (loopback only) |
+| WS | `/ws/v1/terminals/{id}` | server: TEXT `{"type":"attached","replay":N}`, then one BINARY replay frame, then BINARY output; TEXT `{"type":"exit","code"}` / `taken` / `slow` / `gone`. client: BINARY keyboard bytes, TEXT `{"type":"resize","cols","rows"}` |

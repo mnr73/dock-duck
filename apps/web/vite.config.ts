@@ -32,8 +32,11 @@ export default defineConfig({
     },
     server: {
         port: 5173,
+        // changeOrigin stays false on purpose: the backend refuses state-changing
+        // requests whose Origin does not match the Host it sees (CSRF / DNS rebinding
+        // guard), and a rewritten Host would make every dev request look cross-origin.
         proxy: {
-            "/api": apiTarget,
+            "/api": { target: apiTarget },
             "/ws": { target: apiTarget.replace("http", "ws"), ws: true },
         },
     },

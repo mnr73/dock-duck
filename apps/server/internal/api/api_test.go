@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -30,7 +31,7 @@ func TestHealthAndFallback(t *testing.T) {
 	}
 	for _, c := range cases {
 		rec := httptest.NewRecorder()
-		h.ServeHTTP(rec, httptest.NewRequest("GET", c.path, nil))
+		h.ServeHTTP(rec, localReq("GET", c.path, nil))
 		if rec.Code != c.code || !strings.Contains(rec.Body.String(), c.want) {
 			t.Errorf("%s: got %d %q", c.path, rec.Code, rec.Body.String())
 		}
@@ -60,7 +61,7 @@ func TestRootsAndProjects(t *testing.T) {
 
 	do := func(method, path, body string) *httptest.ResponseRecorder {
 		rec := httptest.NewRecorder()
-		h.ServeHTTP(rec, httptest.NewRequest(method, path, strings.NewReader(body)))
+		h.ServeHTTP(rec, localReq(method, path, strings.NewReader(body)))
 		return rec
 	}
 	if rec := do("POST", "/api/v1/roots", `{"path":"relative"}`); rec.Code != 400 {
@@ -125,4 +126,12 @@ func TestLogOptions(t *testing.T) {
 	if o := logOptions(httptest.NewRequest("GET", "/x?tail=-5", nil), false); o.Tail != 200 {
 		t.Errorf("negative tail must fall back to default: %+v", o)
 	}
+}
+
+// localReq is httptest.NewRequest with the Host a real client sends (the default,
+// example.com, is correctly refused by the DNS-rebinding guard).
+func localReq(method, target string, body io.Reader) *http.Request {
+	r := httptest.NewRequest(method, target, body)
+	r.Host = "127.0.0.1:8080"
+	return r
 }

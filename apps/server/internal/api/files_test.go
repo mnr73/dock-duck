@@ -66,7 +66,7 @@ func newFileEnv(t *testing.T) *fileEnv {
 }
 
 func (e *fileEnv) do(method, path, body string, hdr ...string) *httptest.ResponseRecorder {
-	req := httptest.NewRequest(method, path, strings.NewReader(body))
+	req := localReq(method, path, strings.NewReader(body))
 	for i := 0; i+1 < len(hdr); i += 2 {
 		req.Header.Set(hdr[i], hdr[i+1])
 	}

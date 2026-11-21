@@ -39,8 +39,8 @@ export const router = createRouter({
                 },
                 {
                     path: "terminal",
-                    component: () => import("@/pages/ComingSoonPage.vue"),
-                    props: { title: "Terminal", phase: "Phase 7" },
+                    name: "project-terminal",
+                    component: () => import("@/pages/ProjectTerminalPage.vue"),
                 },
             ],
         },

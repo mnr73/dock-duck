@@ -93,3 +93,9 @@ export { default as IconSecret } from "~icons/lucide/lock";
 export { default as IconCheckFile } from "~icons/lucide/file-check";
 export { default as IconTable } from "~icons/lucide/table-2";
 export { default as IconRaw } from "~icons/lucide/file-text";
+
+/* ------------------------------- Terminal --------------------------------- */
+export { default as IconOpenWindow } from "~icons/lucide/app-window";
+export { default as IconUserDefault } from "~icons/lucide/user";
+export { default as IconFontSmaller } from "~icons/lucide/a-arrow-down";
+export { default as IconFontLarger } from "~icons/lucide/a-arrow-up";

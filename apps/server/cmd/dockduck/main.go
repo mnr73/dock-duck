@@ -22,6 +22,7 @@ import (
 	"dockduck/internal/jobs"
 	"dockduck/internal/ports"
 	"dockduck/internal/projects"
+	"dockduck/internal/terminal"
 	"dockduck/internal/webui"
 )
 
@@ -74,19 +75,22 @@ func run(addr, cfgPath string) error {
 	docker := dockercli.New()
 	home, _ := os.UserHomeDir()
 
+	terminals := terminal.NewManager(terminal.SpawnPTY)
 	srv := &http.Server{
 		Addr: addr,
 		Handler: api.New(api.Deps{
-			Info:     api.Info{Version: version, Home: home},
-			UI:       webui.Handler(),
-			Store:    store,
-			Contexts: &contexts.Service{Docker: docker, Store: store},
-			Projects: &projects.Service{Docker: docker, Store: store},
-			Jobs:     jobs.New(docker),
-			Events:   events.New(docker),
-			Ports:    &ports.Service{Docker: docker},
-			Streamer: docker,
-			Stdin:    docker,
+			Info:      api.Info{Version: version, Home: home},
+			UI:        webui.Handler(),
+			Store:     store,
+			Contexts:  &contexts.Service{Docker: docker, Store: store},
+			Projects:  &projects.Service{Docker: docker, Store: store},
+			Jobs:      jobs.New(docker),
+			Events:    events.New(docker),
+			Ports:     &ports.Service{Docker: docker},
+			Streamer:  docker,
+			Stdin:     docker,
+			Runner:    docker,
+			Terminals: terminals,
 		}),
 		ReadHeaderTimeout: 10 * time.Second,
 	}
@@ -104,6 +108,7 @@ func run(addr, cfgPath string) error {
 	case err := <-errc:
 		return err
 	case <-ctx.Done():
+		terminals.Shutdown() // kill shells and what they left running in containers
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		return srv.Shutdown(shutdownCtx)

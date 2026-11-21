@@ -111,10 +111,15 @@ Follow-up (after Phase 5):
 - [x] "Apply" hint after a save while containers are running (`up -d` recreates only what changed), verified: old value stays until Apply, then the container shows the new one
 - Unsaved-changes guard on route change and tab close.
 
-## Phase 7 — Exec terminal (1–2 d)
-- [ ] PTY over WS, xterm.js, resize, reconnect handling
-- [ ] Target service/container, user: default / 0 / 1000 / custom; shell autodetect (`bash`→`sh`); optional command (board 05)
-- [ ] Multiple terminal tabs; default prefs from settings
+## Phase 7 — Exec terminal (1–2 d) — done
+- [x] Real PTY (`creack/pty`) per session, TERM=xterm-256color, binary WebSocket (raw bytes both ways, JSON text frames only for control: resize / attached / exit / taken / gone). xterm.js in the browser with fit, unicode 11, links; arrow keys, history, Home/End, Ctrl+keys, application-cursor mode (vim/less), bracketed paste, resize (SIGWINCH) verified in a real browser
+- [x] Sessions live on the server: reload, page change or a closed tab do not kill the shell; re-attach replays the last 256 KiB (terminal *queries* inside the replay are not answered again). A second viewer takes the session over ("taken"). Limits: 16 sessions, finished ones kept 10 min, unviewed ones closed after 6 h
+- [x] Target service/replica, user (container default / root / UID 1000 / custom `name[:group]`), shell (auto bash -> sh, or custom), working directory, optional command instead of a shell. Everything user-supplied is validated and passed as separate argv entries (never through a local shell); the container comes from the project's own state
+- [x] No leaked processes: docker does not forward the hangup, so every session tags its processes with `DOCKDUCK_TERM=<id>` and a cleanup (`/proc` scan, HUP then KILL, run as the session's own user because `/proc/PID/environ` of another user needs CAP_SYS_PTRACE) runs once on exit, close, reaper and graceful shutdown. Limit: a hard crash (SIGKILL) of DockDuck cannot sweep
+- [x] Tabs per project (persist across pages), new-terminal dialog with a live `docker exec` preview, font size, copy, Ctrl+Shift+C/V, banners for ended (red on a non-zero exit) / taken / lost / gone; reconnect with backoff, and "gone" when the server restarted
+- [x] Native terminal: "Open in <terminal>" runs the same `docker exec` in the system terminal (x-terminal-emulator, konsole, gnome-terminal, kitty, ...; override with `DOCKDUCK_TERMINAL`), loopback clients only, display env discovered from the session's sockets when started by a service; errors from a terminal that dies at once are reported, docker errors stay visible in the window
+- [x] Browser guard (needed once an exec endpoint exists, before real auth): state-changing requests with a foreign `Origin` / `Sec-Fetch-Site` are refused (CSRF via `text/plain`), and the `Host` must be localhost / an IP literal (DNS rebinding)
+- Defaults for the dialog (user, shell) are kept in the browser for now; Phase 9 moves them into Settings.
 
 ## Phase 8 — Auth (2 d)
 - [ ] App auth: first-run setup (password), argon2id, session cookie, CSRF, rate-limit, logout; refuse non-loopback bind without password
