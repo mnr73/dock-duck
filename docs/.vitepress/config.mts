@@ -37,6 +37,7 @@ export default defineConfig({
                     { text: "Compose and .env", link: "/guide/editors" },
                     { text: "Registries", link: "/guide/registries" },
                     { text: "Settings and shortcuts", link: "/guide/settings" },
+                    { text: "AI agent skill", link: "/guide/ai-skill" },
                 ],
             },
             {

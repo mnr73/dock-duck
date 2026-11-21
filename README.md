@@ -6,7 +6,13 @@ A web GUI for the Docker Compose projects you already have. Up, down, start, sto
 
 Docker contexts can be listed and switched, never created or removed.
 
-**Documentation: <https://mnr73.github.io/dock-duck/>**
+|                | |
+| -------------- | ------------------------------------------------------------- |
+| Documentation  | https://mnr73.github.io/dock-duck/                            |
+| Install        | `curl -fsSL https://mnr73.github.io/dock-duck/install.sh \| sh` |
+| Releases       | https://github.com/mnr73/dock-duck/releases                   |
+| Source         | https://github.com/mnr73/dock-duck                            |
+| AI agent skill | https://github.com/mnr73/dock-duck/tree/main/skills/dock-duck |
 
 ## Install
 
@@ -42,7 +48,7 @@ Development: `cd apps/server && go run ./cmd/dockduck --dev` and `cd apps/web &&
 
 ## Releases
 
-Pushing a tag `vX.Y.Z` runs the release workflow, which builds Linux and macOS binaries (amd64 and arm64), `checksums.txt` and a GitHub release. See [scripts/build-release.sh](scripts/build-release.sh).
+Pushing a tag `vX.Y.Z` runs the release workflow, which builds Linux and macOS binaries (amd64 and arm64), `checksums.txt` and a GitHub release. The steps and the one-time GitHub setup are in [RELEASING.md](RELEASING.md).
 
 ## License
 
