@@ -24,7 +24,7 @@ export const useTerminalsStore = defineStore("terminals", () => {
     const loading = ref(false);
     const error = ref("");
 
-    // defaults for the "new terminal" dialog (Phase 9 moves these into Settings)
+    // defaults for the "new terminal" dialog; edited here and in Settings
     const prefs = useStorage<TerminalPrefs>("dockduck.terminal.prefs", {
         user: "default",
         customUser: "",

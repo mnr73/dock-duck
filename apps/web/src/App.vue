@@ -8,10 +8,12 @@ import Toaster from "@/components/ui/Toaster.vue";
 import LoginScreen from "@/features/auth/LoginScreen.vue";
 import AppShell from "@/features/layout/AppShell.vue";
 
+import { useAppearance } from "@/composables/useAppearance";
 import { useTheme } from "@/composables/useTheme";
 import { useAuthStore } from "@/stores/auth";
 
 useTheme(); // applies the saved/system theme class on <html>
+useAppearance(); // accent colour and density
 
 const auth = useAuthStore();
 onMounted(() => auth.load());

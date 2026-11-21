@@ -93,6 +93,20 @@ func (s *Service) Selected(ctx context.Context) (string, error) {
 	return s.selectedFrom(raw), nil
 }
 
+// Has reports whether Docker knows a context with this name.
+func (s *Service) Has(ctx context.Context, name string) (bool, error) {
+	raw, err := s.raw(ctx)
+	if err != nil {
+		return false, err
+	}
+	for _, r := range raw {
+		if r.Name == name {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 // Select switches the app-level context (and the CLI default if SyncCLI is on).
 func (s *Service) Select(ctx context.Context, name string) error {
 	if !dockercli.ValidName(name) {

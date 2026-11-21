@@ -70,7 +70,6 @@ export { default as IconSettings } from "~icons/lucide/settings";
 export { default as IconService } from "~icons/lucide/box";
 /** A running container instance */
 export { default as IconContainer } from "~icons/lucide/container";
-export { default as IconLogo } from "~icons/lucide/bird";
 
 /* ------------------------------- Theme ------------------------------------ */
 export { default as IconThemeLight } from "~icons/lucide/sun";
@@ -107,3 +106,8 @@ export { default as IconShield } from "~icons/lucide/shield-check";
 
 /* ------------------------------- Registries ------------------------------- */
 export { default as IconSignIn } from "~icons/lucide/log-in";
+
+/* -------------------------------- Palette --------------------------------- */
+export { default as IconCommand } from "~icons/lucide/command";
+export { default as IconKeyboard } from "~icons/lucide/keyboard";
+export { default as IconCornerDownLeft } from "~icons/lucide/corner-down-left";

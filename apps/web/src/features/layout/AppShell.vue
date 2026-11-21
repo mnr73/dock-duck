@@ -5,7 +5,11 @@ import { IconSidebarOpen } from "@/icons";
 
 import IconBtn from "@/components/ui/IconBtn.vue";
 
+import CommandPalette from "@/features/palette/CommandPalette.vue";
+import ShortcutsHelp from "@/features/palette/ShortcutsHelp.vue";
+
 import { useLiveEvents } from "@/composables/useLiveEvents";
+import { useShortcuts } from "@/composables/useShortcuts";
 import { useContextsStore } from "@/stores/contexts";
 import { useProjectsStore } from "@/stores/projects";
 import { useSystemStore } from "@/stores/system";
@@ -21,6 +25,9 @@ const system = useSystemStore();
 const contexts = useContextsStore();
 const projects = useProjectsStore();
 const { live } = useLiveEvents();
+const { palette, help } = useShortcuts(
+  () => (ui.sidebarCollapsed = !ui.sidebarCollapsed),
+);
 
 onMounted(async () => {
   await Promise.all([system.load(), contexts.load()]);
@@ -58,6 +65,8 @@ watch(
         <div class="min-h-0 flex-1 overflow-auto"><RouterView /></div>
       </main>
     </div>
-    <StatusBar :live="live" />
+    <StatusBar :live="live" @open-palette="palette = true" />
+    <CommandPalette v-model:open="palette" />
+    <ShortcutsHelp v-model:open="help" />
   </div>
 </template>

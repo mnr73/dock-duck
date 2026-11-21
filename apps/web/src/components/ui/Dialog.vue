@@ -33,7 +33,51 @@ onKeyStroke("Escape", (e) => {
   }
 });
 
+const FOCUSABLE =
+  "a[href], button:not([disabled]), input:not([disabled]):not([type=hidden]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex='-1'])";
+
+/** Tab and Shift+Tab wrap inside the dialog: nothing behind a modal is reachable. */
+function trap(e: KeyboardEvent) {
+  if (e.key !== "Tab" || !panel.value) return;
+  const items = [
+    ...panel.value.querySelectorAll<HTMLElement>(FOCUSABLE),
+  ].filter((el) => el.offsetParent !== null);
+  if (!items.length) {
+    e.preventDefault();
+    panel.value.focus();
+    return;
+  }
+  const first = items[0]!;
+  const last = items[items.length - 1]!;
+  const at = document.activeElement;
+  if (e.shiftKey && (at === first || at === panel.value)) {
+    e.preventDefault();
+    last.focus();
+  } else if (!e.shiftKey && at === last) {
+    e.preventDefault();
+    first.focus();
+  } else if (!panel.value.contains(at)) {
+    e.preventDefault();
+    first.focus();
+  }
+}
+
+/** what had focus before the dialog opened; it gets it back on close */
+let opener: HTMLElement | null = null;
+
 watch(open, async (v) => {
+  if (!v) {
+    const back = opener;
+    opener = null;
+    // after the transition, the opener may have been re-rendered
+    await nextTick();
+    if (back?.isConnected) back.focus();
+    return;
+  }
+  opener =
+    document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
   if (v) {
     await nextTick();
     const focusable = panel.value?.querySelector<HTMLElement>(
@@ -60,6 +104,7 @@ watch(open, async (v) => {
           tabindex="-1"
           class="flex max-h-[90vh] w-full flex-col rounded-xl border border-line-strong bg-surface shadow-pop outline-none"
           :style="{ maxWidth: width }"
+          @keydown="trap"
         >
           <header
             class="flex items-center gap-2 border-b border-line px-4 py-3"

@@ -23,6 +23,9 @@ func registerDocker(mux *http.ServeMux, d Deps) {
 	mux.HandleFunc("GET /api/v1/contexts", h.listContexts)
 	mux.HandleFunc("PUT /api/v1/contexts/selected", h.selectContext)
 
+	mux.HandleFunc("GET /api/v1/settings", h.getSettings)
+	mux.HandleFunc("PUT /api/v1/settings", h.putSettings)
+
 	mux.HandleFunc("GET /api/v1/roots", h.listRoots)
 	mux.HandleFunc("POST /api/v1/roots", h.addRoot)
 	mux.HandleFunc("DELETE /api/v1/roots/{id}", h.deleteRoot)

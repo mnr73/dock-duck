@@ -58,7 +58,8 @@ Everything under `/api/` and `/ws/` except `/api/v1/health` and `/api/v1/auth/*`
 | `GET /registries` | `[{url,username?,store}]` (never secrets) |
 | `POST /registries/login` | `{url,username,secret}` |
 | `DELETE /registries/{url}` | logout |
-| `GET/PUT /settings` | theme, scan depth, terminal defaults, default context, behaviour |
+| `GET /settings` | `{default_context, sync_cli, scan_depth, max_scan_depth, compose_version, config_path}` |
+| `PUT /settings` | any subset of `default_context` ("" = last used; must exist), `sync_cli`, `scan_depth` (1–8; a change rescans); 400 `invalid_scan_depth` / `invalid_context`. Theme, accent, density and terminal defaults are per browser and not part of the API |
 
 ## WebSocket (`/ws/v1`)
 | Path | Direction / frames |

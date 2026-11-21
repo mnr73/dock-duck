@@ -283,3 +283,18 @@ export interface RegistryLoginRequest {
     username: string;
     password: string;
 }
+
+export interface ServerSettings {
+    /** "" = the context used last */
+    default_context: string;
+    sync_cli: boolean;
+    scan_depth: number;
+    max_scan_depth: number;
+    /** "" when `docker compose version` is unavailable */
+    compose_version: string;
+    config_path: string;
+}
+
+export type ServerSettingsPatch = Partial<
+    Pick<ServerSettings, "default_context" | "scan_depth" | "sync_cli">
+>;

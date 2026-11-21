@@ -6,6 +6,7 @@ import type { ContainerEvent } from "@/api/types";
 import { useAuthStore } from "@/stores/auth";
 import { useContextsStore } from "@/stores/contexts";
 import { useProjectsStore } from "@/stores/projects";
+import { useSystemStore } from "@/stores/system";
 
 /**
  * Live container events (WebSocket). On every event the project list and any
@@ -15,8 +16,10 @@ import { useProjectsStore } from "@/stores/projects";
 export function useLiveEvents() {
     const projects = useProjectsStore();
     const auth = useAuthStore();
+    const system = useSystemStore();
     const contexts = useContextsStore();
 
+    let everDown = false;
     const touched = new Set<string>();
     const refresh = useDebounceFn(async () => {
         const names = new Set(touched);
@@ -37,7 +40,20 @@ export function useLiveEvents() {
         // the server closes this socket when the login session ends (logout elsewhere,
         // password change); asking /auth/status shows the login screen right away
         // instead of waiting for the next click to hit a 401
-        onDisconnected: () => void auth.load(),
+        onDisconnected: () => {
+            everDown = true;
+            void auth.load();
+            // tells "the DockDuck server is gone" (banner) from a plain page load
+            void system.load();
+        },
+        // events missed while offline: everything on screen may be stale
+        onConnected: () => {
+            if (!everDown) return;
+            everDown = false;
+            void system.load();
+            void contexts.load();
+            void projects.load(true);
+        },
         onMessage(_ws, e) {
             try {
                 const ev = JSON.parse(e.data) as ContainerEvent;

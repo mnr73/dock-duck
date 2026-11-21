@@ -4,12 +4,13 @@ import type { Component } from "vue";
 import {
   IconContext,
   IconFolder,
-  IconLogo,
   IconPorts,
   IconProjects,
   IconRegistry,
   IconSettings,
 } from "@/icons";
+
+import BrandMark from "@/components/ui/BrandMark.vue";
 
 interface RailItem {
   to: string;
@@ -33,12 +34,7 @@ const items: RailItem[] = [
     aria-label="App"
     class="flex w-13 shrink-0 flex-col items-center gap-1.5 border-r border-line bg-rail py-3"
   >
-    <div
-      class="mb-2 grid size-8 place-items-center rounded-lg bg-accent text-accent-fg"
-      title="DockDuck"
-    >
-      <IconLogo class="size-[18px]" />
-    </div>
+    <BrandMark class="mb-2 size-8" title="DockDuck" />
     <RouterLink
       v-for="it in items"
       :key="it.to"

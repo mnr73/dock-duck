@@ -31,7 +31,7 @@ const system = useSystemStore();
       </template>
       <template #action>
         <span class="flex gap-1.5">
-          <RouterLink to="/contexts"
+          <RouterLink v-if="!system.serverDown" to="/contexts"
             ><Btn size="sm">Switch context</Btn></RouterLink
           >
           <Btn

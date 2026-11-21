@@ -8,6 +8,7 @@ import { useProjectsStore } from "@/stores/projects";
 import { useSystemStore } from "@/stores/system";
 
 defineProps<{ live: boolean }>();
+defineEmits<{ "open-palette": [] }>();
 
 const contexts = useContextsStore();
 const projects = useProjectsStore();
@@ -36,8 +37,16 @@ const ctx = computed(() => contexts.selected);
       >{{ projects.totalContainers }} containers ·
       {{ projects.runningContainers }} running</span
     >
+    <button
+      type="button"
+      class="ml-auto flex h-5 items-center gap-1.5 rounded px-1.5 text-dim hover:bg-hover hover:text-fg"
+      title="Command palette (Ctrl+K)"
+      @click="$emit('open-palette')"
+    >
+      <kbd class="font-mono text-[10.5px]">Ctrl K</kbd> commands
+    </button>
     <span
-      class="ml-auto flex items-center gap-1.5"
+      class="flex items-center gap-1.5"
       :title="live ? 'Live updates connected' : 'Live updates disconnected'"
     >
       <StatusDot :tone="live ? 'ok' : 'off'" size="xs" />

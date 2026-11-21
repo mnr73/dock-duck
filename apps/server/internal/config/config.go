@@ -42,6 +42,9 @@ type Config struct {
 // DefaultScanDepth is used when Settings.ScanDepth is unset.
 const DefaultScanDepth = 4
 
+// MaxScanDepth bounds how deep a root is walked: every level multiplies the work.
+const MaxScanDepth = 8
+
 // RootID derives a stable id from a root path.
 func RootID(path string) string {
 	sum := sha1.Sum([]byte(path))

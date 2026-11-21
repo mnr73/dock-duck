@@ -78,3 +78,9 @@ button:not(:disabled),
     scrollbar-width: thin;
     scrollbar-color: var(--dd-line-strong) transparent;
 }
+
+/* Density: tighter rows in tables. Unlayered on purpose so it beats the utility classes. */
+html[data-density="compact"] tbody td {
+    padding-top: 0.125rem;
+    padding-bottom: 0.125rem;
+}

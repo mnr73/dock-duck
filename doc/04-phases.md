@@ -130,9 +130,13 @@ Follow-up (after Phase 5):
 - [x] Registries: list from `~/.docker/config.json` (+ credential helpers' `list`), **names and usernames only: the stored secret is never read into the response**; sign in via `docker login --username U --password-stdin` (secret on stdin only: not in argv, not in logs, scrubbed from error text when a registry echoes it back); Docker Hub preset, re-authenticate, sign out; warns when docker keeps credentials unencrypted; docker's own error (401 ...) is shown. Verified against a real throwaway `registry:2` with basic auth and an isolated `DOCKER_CONFIG` (the real login file was untouched)
 - Not done on purpose: TLS in the binary (use a reverse proxy; `Secure` cookies are handled), multi-user accounts.
 
-## Phase 9 — Settings + polish (1–2 d)
-- [ ] Settings (board 09): theme, scan config, terminal defaults, default context, behaviour
-- [ ] Keyboard shortcuts / command palette, a11y pass, error & disconnected states, i18n-ready strings
+## Phase 9 — Settings + polish (1–2 d) — done
+- [x] Brand: the supplied duck (`assets/logo.svg`, favicon, `BrandMark` in the rail and on the login screen); the Lucide bird is gone
+- [x] Settings page = board 09 in five cards, saved as you go. **Server-side** (shared by every browser, `GET/PUT /api/v1/settings`, partial updates, validated: scan depth 1–8, default context must exist in Docker, `sync_cli`; a changed depth rescans at once; the response carries the detected Compose version and never auth data). **Per browser** (localStorage): theme, accent colour (5 swatches; the readable text variant adapts to light/dark), density, terminal defaults (shell, user, font size; the new-terminal dialog reads the same store), "confirm before compose down" (volume removal always asks and still needs the typed name), "toasts for finished operations" (failures always show)
+- [x] Command palette (Ctrl/Cmd+K): pages, every project, the open project's tabs and safe actions (up/restart/stop/pull), rescan, theme; fuzzy search (exact > prefix > word initials > substring > subsequence). `down` is deliberately not in it. Shortcuts: `?` help, `[` sidebar, `g` then `p/o/r/s` to navigate; single keys never fire while typing in a field, the code editor or a terminal
+- [x] a11y: no unnamed buttons/inputs/links on any of the 11 routes, one `h1` per page, landmarks, contrast checked (muted/dim/status colours ≥ 4.5:1 in both themes); dialogs now trap Tab/Shift+Tab and return focus to the opener; the palette is a combobox/listbox with `aria-activedescendant`
+- [x] Error and disconnected states: the server going away raises the banner within a second (no Docker-context button then), and a reconnect clears it and reloads contexts/projects, since events were missed meanwhile
+- Not done on purpose: "Watch roots for changes" and "Keep running in the menu bar" from the mockup (a server has no menu bar; a filesystem watcher is a separate feature); i18n is string-ready only (all UI text is English literals in templates, no catalogue yet)
 
 ## Phase 10 — Packaging & release (1 d)
 - [ ] Cross-compiled binaries (linux amd64/arm64, darwin), `--version`

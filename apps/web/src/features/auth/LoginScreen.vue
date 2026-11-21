@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 
-import { IconLogo } from "@/icons";
-
 import Alert from "@/components/ui/Alert.vue";
+import BrandMark from "@/components/ui/BrandMark.vue";
 import Btn from "@/components/ui/Btn.vue";
 
 import { useAuthStore } from "@/stores/auth";
@@ -53,11 +52,7 @@ async function submit() {
       @submit.prevent="submit"
     >
       <div class="mb-5 flex items-center gap-2.5">
-        <div
-          class="grid size-9 place-items-center rounded-lg bg-accent text-accent-fg"
-        >
-          <IconLogo class="size-5" />
-        </div>
+        <BrandMark class="size-10" />
         <div>
           <h1 class="text-[16px] leading-tight font-semibold tracking-tight">
             DockDuck

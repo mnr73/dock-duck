@@ -6,6 +6,8 @@ import { toast } from "vue-sonner";
 import { api, errorMessage } from "@/api/client";
 import type { JobInfo } from "@/api/types";
 
+import { usePrefsStore } from "./prefs";
+
 export interface ActionRequest {
     projectId: string;
     projectName: string;
@@ -94,9 +96,10 @@ export const useJobsStore = defineStore("jobs", () => {
             if (current.value?.id === jobId)
                 current.value = { ...current.value, status, error };
             if (status === "succeeded") {
-                toast.success(
-                    `${req.projectName} ${req.services?.length ? label.replace(`${req.action} `, "") + " " : ""}${PAST[req.action] ?? "done"}`,
-                );
+                if (usePrefsStore().doneToasts)
+                    toast.success(
+                        `${req.projectName} ${req.services?.length ? label.replace(`${req.action} `, "") + " " : ""}${PAST[req.action] ?? "done"}`,
+                    );
             } else {
                 toast.error(`${req.projectName}: ${label} failed`, {
                     description: lastUsefulLine(lines.value) || error,

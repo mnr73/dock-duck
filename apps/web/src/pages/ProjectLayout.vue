@@ -24,6 +24,7 @@ import JobDrawer from "@/features/projects/JobDrawer.vue";
 import ProjectHeader from "@/features/projects/ProjectHeader.vue";
 
 import { useJobsStore } from "@/stores/jobs";
+import { usePrefsStore } from "@/stores/prefs";
 import { useProjectsStore } from "@/stores/projects";
 
 const route = useRoute();
@@ -34,6 +35,7 @@ const id = computed(() => route.params.id as string);
 const project = computed(() => projects.byId(id.value));
 const detail = computed(() => projects.details[id.value]);
 const running = computed(() => jobs.running[id.value] ?? "");
+const prefs = usePrefsStore();
 const downOpen = ref(false);
 const buildOpen = ref(false);
 
@@ -85,6 +87,16 @@ function act(
 
 function confirmBuild(o: { noCache: boolean; pull: boolean }) {
   act("build", o);
+}
+
+/**
+ * "Confirm before compose down" can be switched off in Settings: a plain down then
+ * runs at once. Removing volumes is irreversible, so that path always goes through
+ * the dialog (it is only reachable from there).
+ */
+function askDown() {
+  if (prefs.confirmDown) downOpen.value = true;
+  else act("down", { volumes: false, removeOrphans: false });
 }
 
 function confirmDown(o: { volumes: boolean; removeOrphans: boolean }) {
@@ -165,7 +177,7 @@ function confirmDown(o: { volumes: boolean; removeOrphans: boolean }) {
           variant="danger"
           :disabled="!project.total || !!running"
           :loading="running === 'down'"
-          @click="downOpen = true"
+          @click="askDown"
         >
           <template #icon><IconDown class="size-3.5" /></template>
           Down…
